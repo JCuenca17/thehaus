@@ -24,10 +24,10 @@
   --negro-08: rgba(12, 12, 12, 0.08);
   --crudo: #efefee;
   --blanco: #ffffff;
-  --naranja: #fc7128;
-  --naranja-12: rgba(252, 113, 40, 0.12);
-  --dorado: #cfb32e;
-  --dorado-14: rgba(207, 179, 46, 0.14);
+  --dorado: #fc7128;
+  --dorado-12: rgba(252, 113, 40, 0.12);
+  --naranja: #cfb32e;
+  --naranja-14: rgba(207, 179, 46, 0.14);
   --azul: #0a6afa;
   --azul-10: rgba(10, 106, 250, 0.1);
 
@@ -762,7 +762,7 @@ a {
 }
 .ic-dorado {
   background: var(--dorado-14);
-  color: #a8900f;
+  color: var(--dorado);
 }
 .ic-azul {
   background: var(--azul-10);
