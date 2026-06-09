@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Haus | Coworking · Arequipa</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#beneficios" onclick="closeMobileMenu()">Beneficios</a>
+      <a href="#zonas" onclick="closeMobileMenu()">Zonas</a>
+      <a href="#valores" onclick="closeMobileMenu()">Valores</a>
+      <a href="#contacto" onclick="closeMobileMenu()" class="menu-cta"
+        >Agendar visita</a
+      >
+    </div>
+
+    <nav id="nav">
+      <div class="wrap nav-row">
+        <a href="#" class="logo">
+          <span class="logo-main">the haus</span>
+          <span class="logo-sub">Coworking</span>
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="#beneficios">Beneficios</a></li>
+          <li><a href="#zonas">Zonas</a></li>
+          <li><a href="#valores">Valores</a></li>
+          <li><a href="#contacto" class="nav-cta">Agendar visita</a></li>
+        </ul>
+
+        <button class="hamburger" id="hamburger" aria-label="Abrir menú">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="hero-gradient"></div>
+      <div class="hero-noise"></div>
+
+      <div class="hero-scroll-cue">
+        <div class="scroll-track"></div>
+        <span>Scroll</span>
+      </div>
+
+      <div class="hero-content wrap">
+        <p class="hero-eyebrow">
+          <span class="dot"></span>
+          Ecosistema Premium · Arequipa
+        </p>
+
+        <h1>
+          Conecta, crea<br />
+          y haz crecer<br />
+          <span class="hero-cycle" id="heroCycle">tu proyecto.</span>
+        </h1>
+
+        <p class="hero-desc">
+          Más que un escritorio: somos el ecosistema diseñado para
+          <strong>profesionales y equipos</strong> que buscan
+          <strong>flexibilidad, comodidad</strong> y una comunidad activa.
+        </p>
+
+        <div class="hero-btns">
+          <a href="#contacto" class="btn btn-dark">
+            Reserva tu espacio
+            <i class="fa-solid fa-arrow-right fa-xs"></i>
+          </a>
+          <a href="#zonas" class="btn btn-ghost-white"> Explorar zonas </a>
+        </div>
+      </div>
+    </header>
+
+    <div class="stats-strip">
+      <div class="stats-row wrap">
+        <div class="stat-cell">
+          <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <div class="stat-val">
+              <span data-count="150" class="counter">150</span>+
+            </div>
+            <div class="stat-lbl">Miembros activos</div>
+          </div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div>
+            <div class="stat-val">
+              <span data-count="5" class="counter">5</span>
+            </div>
+            <div class="stat-lbl">Zonas exclusivas</div>
+          </div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-icon"><i class="fa-solid fa-expand"></i></div>
+          <div>
+            <div class="stat-val">
+              <span data-count="500" class="counter">500</span>m²
+            </div>
+            <div class="stat-lbl">Espacio total</div>
+          </div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+          <div>
+            <div class="stat-val">
+              <span data-count="12" class="counter">12</span>h
+            </div>
+            <div class="stat-lbl">Acceso diario</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section id="beneficios" class="seccion bg-crudo">
+      <div class="wrap">
+        <div class="sec-header center reveal">
+          <span class="eyebrow">Por qué elegirnos</span>
+          <h2>Todo lo que necesitas para que tu productividad fluya.</h2>
+          <p>
+            Infraestructura de primer nivel, diseñada para que nunca tengas
+            excusas.
+          </p>
+        </div>
+
+        <div class="beneficios-grid">
+          <div class="bene-card reveal">
+            <div class="bene-num">01</div>
+            <div class="bene-icon ic-naranja">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
+            <h3>Fibra óptica</h3>
+            <p>
+              Conexión <strong>estable y simétrica</strong>. Tus videollamadas y
+              entregas <strong>nunca se detendrán</strong>.
+            </p>
+          </div>
+          <div class="bene-card reveal d1">
+            <div class="bene-num">02</div>
+            <div class="bene-icon ic-dorado">
+              <i class="fa-solid fa-mug-hot"></i>
+            </div>
+            <h3>Café ilimitado</h3>
+            <p>
+              Tu <strong>dosis de energía</strong> cubierta todo el día.
+              Disfruta de nuestra <strong>barra de café premium</strong>.
+            </p>
+          </div>
+          <div class="bene-card reveal d2">
+            <div class="bene-num">03</div>
+            <div class="bene-icon ic-azul">
+              <i class="fa-solid fa-handshake"></i>
+            </div>
+            <h3>Comunidad activa</h3>
+            <p>
+              Conecta de <strong>forma natural</strong> con emprendedores y
+              <strong>expande tu red</strong> estratégica.
+            </p>
+          </div>
+          <div class="bene-card reveal d3">
+            <div class="bene-num">04</div>
+            <div class="bene-icon ic-negro">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h3>Seguridad 24/7</h3>
+            <p>
+              Acceso digital controlado y
+              <strong>monitoreo constante</strong> para trabajar con
+              <strong>total tranquilidad</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="zonas" class="seccion bg-blanco">
+      <div class="wrap">
+        <div class="sec-header center reveal">
+          <span class="eyebrow">Nuestras zonas</span>
+          <h2>Cada espacio, diseñado para un propósito.</h2>
+          <p>
+            Explora los entornos que hemos creado para potenciar cada tipo de
+            trabajo.
+          </p>
+        </div>
+
+        <div class="bento reveal-scale">
+          <div class="zona">
+            <div
+              class="zona-img"
+              style="background-image: url(&quot;img/oficina-privada.jpg&quot;)"
+            ></div>
+            <div class="zona-info">
+              <span class="zona-tag">Foco y privacidad</span>
+              <span class="zona-num">01</span>
+              <h3 class="zona-name">Oficinas privadas</h3>
+              <p class="zona-desc">
+                Espacios silenciosos para equipos pequeños o trabajo de alta
+                concentración. Aislamiento total del ruido exterior.
+              </p>
+              <a href="#contacto" class="zona-link">
+                Ver disponibilidad
+                <span class="zona-link-arrow"
+                  ><i class="fa-solid fa-arrow-right fa-2xs"></i
+                ></span>
+              </a>
+            </div>
+          </div>
+
+          <div class="zona">
+            <div
+              class="zona-img"
+              style="background-image: url(&quot;img/oficina-privada.jpg&quot;)"
+            ></div>
+            <div class="zona-info">
+              <span class="zona-tag">Premium</span>
+              <span class="zona-num">02</span>
+              <h3 class="zona-name">Sala de juntas</h3>
+              <p class="zona-desc">
+                Perfecta para presentaciones, reuniones de directorio y
+                asesorías profesionales.
+              </p>
+              <a href="#contacto" class="zona-link">
+                Ver disponibilidad
+                <span class="zona-link-arrow"
+                  ><i class="fa-solid fa-arrow-right fa-2xs"></i
+                ></span>
+              </a>
+            </div>
+          </div>
+
+          <div class="zona">
+            <div
+              class="zona-img"
+              style="background-image: url(&quot;img/oficina-privada.jpg&quot;)"
+            ></div>
+            <div class="zona-info">
+              <span class="zona-tag">Eventos</span>
+              <span class="zona-num">03</span>
+              <h3 class="zona-name">Auditorio</h3>
+              <p class="zona-desc">
+                Tecnología audiovisual completa y capacidad para 30 personas.
+                Ideal para talleres y lanzamientos.
+              </p>
+              <a href="#contacto" class="zona-link">
+                Ver disponibilidad
+                <span class="zona-link-arrow"
+                  ><i class="fa-solid fa-arrow-right fa-2xs"></i
+                ></span>
+              </a>
+            </div>
+          </div>
+
+          <div class="zona">
+            <div
+              class="zona-img"
+              style="background-image: url(&quot;img/oficina-privada.jpg&quot;)"
+            ></div>
+            <div class="zona-info">
+              <span class="zona-tag">Relax</span>
+              <span class="zona-num">04</span>
+              <h3 class="zona-name">Sala de estar</h3>
+              <p class="zona-desc">
+                Lounge para cerrar tratos en ambiente casual o simplemente tomar
+                una pausa inspiradora.
+              </p>
+              <a href="#contacto" class="zona-link">
+                Ver disponibilidad
+                <span class="zona-link-arrow"
+                  ><i class="fa-solid fa-arrow-right fa-2xs"></i
+                ></span>
+              </a>
+            </div>
+          </div>
+
+          <div class="zona">
+            <div
+              class="zona-img"
+              style="background-image: url(&quot;img/oficina-privada.jpg&quot;)"
+            ></div>
+            <div class="zona-info">
+              <span class="zona-tag">Comunidad</span>
+              <span class="zona-num">05</span>
+              <h3 class="zona-name">Trabajo compartido</h3>
+              <p class="zona-desc">
+                Hot desking en el corazón de la comunidad. Ambiente dinámico y
+                energía creativa permanente.
+              </p>
+              <a href="#contacto" class="zona-link">
+                Ver disponibilidad
+                <span class="zona-link-arrow"
+                  ><i class="fa-solid fa-arrow-right fa-2xs"></i
+                ></span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="valores" class="seccion bg-crudo">
+      <div class="wrap">
+        <div class="sec-header center reveal">
+          <span class="eyebrow">Nuestra filosofía</span>
+          <h2>Los principios que guían cada detalle.</h2>
+        </div>
+
+        <div class="valores-row">
+          <div class="valor-card reveal">
+            <div class="valor-bg-num">01</div>
+            <div class="valor-dot-row">
+              <div class="valor-dot" style="background: var(--naranja)"></div>
+              <h3 class="valor-title">Colaboración</h3>
+            </div>
+            <p class="valor-desc">
+              Creemos en el poder de compartir ideas. Tu red de contactos
+              <strong>crece exponencialmente</strong> mediante sinergias
+              naturales todos los días.
+            </p>
+          </div>
+          <div class="valor-card reveal d1">
+            <div class="valor-bg-num">02</div>
+            <div class="valor-dot-row">
+              <div class="valor-dot" style="background: var(--dorado)"></div>
+              <h3 class="valor-title">Enfoque</h3>
+            </div>
+            <p class="valor-desc">
+              Diseñamos infraestructura, iluminación y acústica con el único fin
+              de <strong>eliminar distracciones</strong> y potenciar tu talento.
+            </p>
+          </div>
+          <div class="valor-card reveal d2">
+            <div class="valor-bg-num">03</div>
+            <div class="valor-dot-row">
+              <div class="valor-dot" style="background: var(--azul)"></div>
+              <h3 class="valor-title">Flexibilidad</h3>
+            </div>
+            <p class="valor-desc">
+              Nuestros espacios y membresías
+              <strong>se adaptan ágilmente</strong> a cómo, cuándo y dónde
+              decides trabajar.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contacto" class="cta-section">
+      <div class="cta-deco">the haus</div>
+      <div class="wrap">
+        <div class="cta-split reveal">
+          <div class="cta-left">
+            <span class="eyebrow light">Próximo paso</span>
+            <h2>¿Listo para hacer <em>crecer</em><br />tu proyecto?</h2>
+            <p>
+              Ven a tomar un café con nosotros y
+              <strong>descubre el entorno</strong> que impulsará tu próximo gran
+              logro. Sin compromisos.
+            </p>
+          </div>
+          <div class="cta-right">
+            <a href="#" class="btn btn-white">
+              <i class="fa-brands fa-whatsapp btn-whatsapp"></i>
+              Escríbenos por WhatsApp
+            </a>
+            <a href="#" class="btn btn-ghost-white-dark">
+              Ver planes y tarifas
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="wrap">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <a href="#" class="logo">
+              <span class="logo-main">the haus</span>
+              <span class="logo-sub">Coworking</span>
+            </a>
+            <p>Tu ecosistema de trabajo en Arequipa, Perú.</p>
+          </div>
+
+          <div class="footer-info-col">
+            <div class="footer-info-row">
+              <i class="fa-solid fa-location-dot"></i>
+              <span>Arequipa, Perú</span>
+            </div>
+            <div class="footer-info-row">
+              <i class="fa-solid fa-clock"></i>
+              <span>Lun – Vie: 08:00 – 20:00</span>
+            </div>
+          </div>
+
+          <div class="footer-socials">
+            <a href="#" class="social-btn" aria-label="Instagram">
+              <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="#" class="social-btn" aria-label="TikTok">
+              <i class="fa-brands fa-tiktok"></i>
+            </a>
+            <a href="#" class="social-btn" aria-label="LinkedIn">
+              <i class="fa-brands fa-linkedin-in"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© 2026 The Haus Coworking. Todos los derechos reservados.</span>
+          <span>Diseñado con <span class="heart">♥</span> en Arequipa</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
