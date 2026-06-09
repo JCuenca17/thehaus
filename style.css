@@ -405,7 +405,7 @@ a {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background-image: url("");
+  background-image: url("img/inicio.jpeg");
   background-size: cover;
   background-position: center;
   will-change: transform;
