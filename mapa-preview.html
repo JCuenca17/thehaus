@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Planta · banco de pruebas</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        background: var(--crudo);
+        padding: 40px;
+      }
+      .banco {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .barra {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+      .pill {
+        padding: 6px 14px;
+        border-radius: 40px;
+        background: var(--blanco);
+        border: var(--borde);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banco">
+      <div class="barra">
+        <span class="pill" id="resumen">—</span>
+        <span class="pill" id="areas">—</span>
+        <button class="pill" id="toggle">Pausar simulador</button>
+      </div>
+      <div id="mapa"></div>
+    </div>
+
+    <script type="module">
+      import { renderizarMapa, crearSimulador } from "./js/mapa.js";
+      import { ZONAS, PUESTOS, ESPACIOS, LOCAL, areaM2 } from "./js/planta.js";
+
+      /* Validaciones de geometría: fallan ruidosamente en consola en vez de
+         producir un plano sutilmente roto */
+      const solapan = (a, b) =>
+        a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+      const problemas = [];
+      for (let i = 0; i < ZONAS.length; i++)
+        for (let j = i + 1; j < ZONAS.length; j++)
+          if (solapan(ZONAS[i].rect, ZONAS[j].rect))
+            problemas.push(`zonas solapadas: ${ZONAS[i].id} ↔ ${ZONAS[j].id}`);
+
+      for (const u of [...PUESTOS, ...ESPACIOS]) {
+        const z = ZONAS.find((z) => z.id === u.zona);
+        const dentro =
+          u.rect.x >= z.rect.x &&
+          u.rect.y >= z.rect.y &&
+          u.rect.x + u.rect.w <= z.rect.x + z.rect.w &&
+          u.rect.y + u.rect.h <= z.rect.y + z.rect.h;
+        if (!dentro) problemas.push(`${u.id} se sale de la zona ${z.id}`);
+        if (u.rect.x + u.rect.w > LOCAL.ancho || u.rect.y + u.rect.h > LOCAL.alto)
+          problemas.push(`${u.id} se sale del local`);
+      }
+
+      console[problemas.length ? "error" : "log"](
+        problemas.length ? `[planta] ${problemas.length} problemas:\n` + problemas.join("\n")
+                         : "[planta] geometría OK",
+      );
+
+      const mapa = renderizarMapa(document.getElementById("mapa"), {
+        interactivo: true,
+        alSeleccionar: (u) => console.log("[seleccion]", u.id, u.nombre, u.estado),
+      });
+
+      const sim = crearSimulador(mapa, { intervalo: 1400, ritmo: 4 });
+      sim.iniciar();
+
+      const m2 = (r) => (r.w * r.h) / 10000;
+      const areas = ZONAS.map((z) => `${z.nombre}: ${m2(z.rect).toFixed(0)}m²`).join(" · ");
+      const total = ZONAS.reduce((a, z) => a + m2(z.rect), 0);
+
+      document.getElementById("areas").textContent =
+        `${areas} — zonas ${total.toFixed(0)}m² / local ${m2(LOCAL.ancho ? { w: LOCAL.ancho, h: LOCAL.alto } : {}).toFixed(0)}m²`;
+
+      setInterval(() => {
+        const r = mapa.resumen();
+        document.getElementById("resumen").textContent =
+          `${PUESTOS.length} puestos + ${ESPACIOS.length} espacios — libres ${r.libre} · reservados ${r.reservado} · ocupados ${r.ocupado}`;
+      }, 400);
+
+      let corriendo = true;
+      document.getElementById("toggle").addEventListener("click", (e) => {
+        corriendo = !corriendo;
+        corriendo ? sim.iniciar() : sim.detener();
+        e.target.textContent = corriendo ? "Pausar simulador" : "Reanudar simulador";
+      });
+    </script>
+  </body>
+</html>

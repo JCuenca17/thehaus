@@ -1491,3 +1491,91 @@ a {
     transform: none;
   }
 }
+
+/* ================================================================
+   MAPA DE OCUPACIÓN
+================================================================ */
+:root {
+  --libre: #2f9e6e;
+  --libre-16: rgba(47, 158, 110, 0.16);
+  --ocupado: #9aa0a6;
+  --reservado: var(--dorado);
+}
+
+.mapa {
+  width: 100%;
+  height: auto;
+  display: block;
+  font-family: var(--body);
+}
+
+/* Zonas: solo contexto, sin peso visual que compita con los asientos */
+.zona-fondo {
+  fill: rgba(12, 12, 12, 0.028);
+  stroke: rgba(12, 12, 12, 0.07);
+  stroke-width: 2;
+}
+.zona-etiqueta {
+  font-size: 34px;
+  font-weight: 600;
+  fill: var(--negro-60);
+  letter-spacing: 0.5px;
+}
+
+.servicio {
+  fill: rgba(12, 12, 12, 0.05);
+}
+.servicio-etiqueta {
+  font-size: 26px;
+  fill: rgba(12, 12, 12, 0.45);
+  text-anchor: middle;
+}
+
+/* Unidades reservables */
+.unidad rect {
+  fill: var(--libre-16);
+  stroke: var(--libre);
+  stroke-width: 3;
+  transition:
+    fill 0.45s var(--ease),
+    stroke 0.45s var(--ease);
+}
+.unidad[data-estado="reservado"] rect {
+  fill: rgba(252, 113, 40, 0.18);
+  stroke: var(--reservado);
+}
+/* Gris claramente mas oscuro que el fondo de zona, para que un puesto
+   ocupado no se lea como hueco vacio del plano */
+.unidad[data-estado="ocupado"] rect {
+  fill: rgba(154, 160, 166, 0.34);
+  stroke: var(--ocupado);
+}
+
+.unidad-etiqueta {
+  font-size: 30px;
+  font-weight: 600;
+  fill: var(--negro-60);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* Solo en /app: el teaser de la landing no responde al puntero */
+.mapa--interactivo .unidad {
+  cursor: pointer;
+}
+.mapa--interactivo .unidad[data-estado="libre"]:hover rect {
+  fill: rgba(47, 158, 110, 0.34);
+}
+.mapa--interactivo .unidad:focus-visible {
+  outline: none;
+}
+.mapa--interactivo .unidad:focus-visible rect {
+  stroke: var(--azul);
+  stroke-width: 6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unidad rect {
+    transition: none;
+  }
+}

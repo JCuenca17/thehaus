@@ -9,3 +9,6 @@ img/hero-placeholder.txt
 
 # Los .otf son el origen de los .woff2; el navegador ya no los pide
 *.otf
+
+# Banco de pruebas de la planta: herramienta de desarrollo, no va a produccion
+mapa-preview.html
