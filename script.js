@@ -154,17 +154,45 @@ const mapaTeaser = document.getElementById("mapaTeaser");
 
 if (mapaTeaser) {
   const quietud = window.matchMedia("(prefers-reduced-motion: reduce)");
-  let simulador = null;
+  const listaZonas = document.getElementById("mapaZonas");
 
-  const observadorVisible = new IntersectionObserver(
-    (entries) => {
-      if (!simulador) return;
-      for (const e of entries) {
-        e.isIntersecting ? simulador.iniciar() : simulador.detener();
-      }
-    },
-    { threshold: 0.08 },
-  );
+  let simulador = null;
+  let refresco = null;
+
+  /* Simulador y refresco de cifras van juntos: ninguno de los dos sigue
+     corriendo cuando la seccion no esta a la vista. */
+  const arrancar = (mapa) => {
+    if (refresco) return;
+    simulador.iniciar();
+    refresco = setInterval(() => pintarZonas(mapa), 1200);
+  };
+
+  const parar = () => {
+    simulador?.detener();
+    clearInterval(refresco);
+    refresco = null;
+  };
+
+  const pintarZonas = (mapa) => {
+    if (!listaZonas) return;
+    listaZonas.hidden = false;
+    listaZonas.replaceChildren(
+      ...mapa.resumenPorZona().map((z) => {
+        // Las zonas de un solo espacio no se cuentan, se describen
+        const cifra =
+          z.total === 1
+            ? `<strong>${z.libres ? "Libre" : "Ocupado"}</strong>`
+            : `<strong>${z.libres}</strong> de ${z.total} libres`;
+
+        const li = document.createElement("li");
+        li.dataset.libre = z.libres ? "si" : "no";
+        li.innerHTML =
+          `<span class="zona-nombre">${z.nombre}</span>` +
+          `<span class="zona-cifra">${cifra}</span>`;
+        return li;
+      }),
+    );
+  };
 
   const montar = async () => {
     const { renderizarMapa, crearSimulador } = await import("./js/mapa.js");
@@ -176,9 +204,18 @@ if (mapaTeaser) {
       // Con movimiento reducido el plano se siembra una vez y se queda quieto
       simulador.iniciar();
       simulador.detener();
-    } else {
-      observadorVisible.observe(mapaTeaser);
+      pintarZonas(mapa);
+      return;
     }
+
+    new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) e.isIntersecting ? arrancar(mapa) : parar();
+      },
+      { threshold: 0.08 },
+    ).observe(mapaTeaser);
+
+    pintarZonas(mapa);
   };
 
   const observadorCarga = new IntersectionObserver(

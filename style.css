@@ -1665,3 +1665,125 @@ a {
     min-width: 640px;
   }
 }
+
+/* ─── Vista isométrica ─── */
+/* Las caras heredan el color de estado y se oscurecen segun orientacion,
+   que es lo que produce la sensacion de volumen sin luces reales. */
+.mapa--isometrico .unidad polygon {
+  transition:
+    fill 0.45s var(--ease),
+    stroke 0.45s var(--ease);
+}
+.mapa--isometrico .unidad .cara-sup {
+  fill: #cfe9dd;
+  stroke: var(--libre);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.mapa--isometrico .unidad .cara-der {
+  fill: var(--libre);
+  opacity: 0.55;
+}
+.mapa--isometrico .unidad .cara-izq {
+  fill: var(--libre);
+  opacity: 0.32;
+}
+
+.mapa--isometrico .unidad[data-estado="reservado"] .cara-sup {
+  fill: #fbdcc9;
+  stroke: var(--reservado);
+}
+.mapa--isometrico .unidad[data-estado="reservado"] .cara-der,
+.mapa--isometrico .unidad[data-estado="reservado"] .cara-izq {
+  fill: var(--reservado);
+}
+
+.mapa--isometrico .unidad[data-estado="ocupado"] .cara-sup {
+  fill: #d8dbde;
+  stroke: var(--ocupado);
+}
+.mapa--isometrico .unidad[data-estado="ocupado"] .cara-der,
+.mapa--isometrico .unidad[data-estado="ocupado"] .cara-izq {
+  fill: var(--ocupado);
+}
+
+.mapa--isometrico .zona-fondo {
+  fill: rgba(12, 12, 12, 0.05);
+  stroke: rgba(12, 12, 12, 0.09);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.mapa--isometrico .zona-etiqueta {
+  text-anchor: middle;
+  font-size: 40px;
+}
+.mapa--isometrico .servicio {
+  fill: rgba(12, 12, 12, 0.12);
+}
+.mapa--isometrico .servicio.cara-sup {
+  fill: rgba(12, 12, 12, 0.07);
+}
+.mapa--isometrico .servicio-etiqueta {
+  font-size: 30px;
+}
+.mapa--isometrico .unidad-etiqueta {
+  font-size: 34px;
+}
+
+/* La unidad se despega del suelo al apuntarla: el volumen hace legible
+   el gesto sin necesidad de cambiar el color, que ya significa estado */
+.mapa--isometrico.mapa--interactivo .unidad {
+  transition: transform 0.25s var(--ease);
+}
+.mapa--isometrico.mapa--interactivo .unidad[data-estado="libre"]:hover,
+.mapa--isometrico.mapa--interactivo .unidad:focus-visible {
+  transform: translateY(-14px);
+}
+.mapa--isometrico.mapa--interactivo .unidad:focus-visible .cara-sup {
+  stroke: var(--azul);
+  stroke-width: 7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapa--isometrico .unidad polygon,
+  .mapa--isometrico.mapa--interactivo .unidad {
+    transition: none;
+  }
+}
+
+/* Disponibilidad por zona: sustituye a los rotulos dentro del plano, que
+   en isometrico no tienen hueco limpio, y ademas es texto real */
+.mapa-zonas-lista {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+  text-align: left;
+}
+.mapa-zonas-lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--blanco);
+  border: var(--borde);
+  border-radius: 12px;
+  font-size: 13px;
+}
+.zona-nombre {
+  font-weight: 600;
+}
+.zona-cifra {
+  color: var(--negro-60);
+  white-space: nowrap;
+}
+.zona-cifra strong {
+  color: var(--libre);
+  font-size: 15px;
+}
+/* Sin nada libre la cifra no puede seguir en verde */
+.mapa-zonas-lista li[data-libre="no"] .zona-cifra strong {
+  color: var(--ocupado);
+}
