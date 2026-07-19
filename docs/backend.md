@@ -138,6 +138,15 @@ reconocer lo que acaba de reservar.
 
 ---
 
+## Reservas anteriores a las cuentas
+
+Se **descartan** al aparecer la puerta de sesion, subiendo la version de la
+clave de almacenamiento y avisando una vez.
+
+No se atribuyen a la primera cuenta que se cree: eso haria que alguien
+abriera la aplicacion y heredase reservas que no hizo. Inventar propiedad
+sobre unos datos es peor que perder datos de demostracion.
+
 ## Pendiente de decidir
 
 - **Cancelaciones**: plazo y consecuencia. Hay que escribirlo antes de
