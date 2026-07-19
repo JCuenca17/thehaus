@@ -374,8 +374,10 @@ function fichaDeUnidad(unidad) {
     // Cada linea solo si tiene contenido: sin esto salia "Ocupado el ."
     // cuando los dias que faltaban eran todos reservas propias
     if (disp.ocupadas.length) {
+      // fechaCorta ya termina en punto (mes abreviado): la frase no anade
+      // otro, o sale "24 jul.."
       lineas.push(
-        `<span>Ocupado el ${disp.ocupadas.map(fechaCorta).join(", ")}.</span>`,
+        `<span>Ocupado el ${disp.ocupadas.map(fechaCorta).join(", ")}</span>`,
       );
     }
     if (disp.mias.length) {
