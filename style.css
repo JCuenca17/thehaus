@@ -405,11 +405,21 @@ a {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background-image: url("img/inicio.jpeg");
-  background-size: cover;
-  background-position: center;
+  display: block;
   will-change: transform;
   animation: heroZoom 1.8s var(--ease) forwards;
+
+  /* Miniatura borrosa incrustada: cubre el hueco mientras baja la imagen real */
+  background-image: url("data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAABwAwCdASoYABAAPxFysFAsJqSisAgBgCIJYwCdAAMWKY1+sgAA/q+Xua7dcs60Vqe299AONVA1UQ432881HG4e5ZhnKbYLpJ/4blZGx4LjkJqAA");
+  background-size: cover;
+  background-position: center;
+}
+.hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 @keyframes heroZoom {
   from {
@@ -832,10 +842,16 @@ a {
 .zona-img {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
+  display: block;
   transition: transform 0.75s var(--ease);
   will-change: transform;
+}
+.zona-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 .zona:hover .zona-img {
   transform: scale(1.06);

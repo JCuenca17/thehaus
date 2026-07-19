@@ -29,12 +29,21 @@ hamburger.addEventListener("click", () => {
 
 /* ─── HERO PARALLAX ─── */
 const heroBg = document.getElementById("heroBg");
+let parallaxPendiente = false;
+
 window.addEventListener(
   "scroll",
   () => {
-    if (window.scrollY < window.innerHeight) {
-      heroBg.style.transform = `scale(1) translateY(${window.scrollY * 0.28}px)`;
-    }
+    // Un solo write por frame en lugar de uno por evento de scroll
+    if (parallaxPendiente) return;
+    parallaxPendiente = true;
+
+    requestAnimationFrame(() => {
+      parallaxPendiente = false;
+      if (window.scrollY < window.innerHeight) {
+        heroBg.style.transform = `scale(1) translateY(${window.scrollY * 0.28}px)`;
+      }
+    });
   },
   { passive: true },
 );

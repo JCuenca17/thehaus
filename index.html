@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Haus | Coworking · Arequipa</title>
 
+    <!-- El hero es el LCP: se adelanta la descarga antes de parsear el CSS -->
+    <link
+      rel="preload"
+      as="image"
+      type="image/avif"
+      imagesrcset="
+        img/inicio-640.avif   640w,
+        img/inicio-960.avif   960w,
+        img/inicio-1280.avif 1280w,
+        img/inicio-1920.avif 1920w,
+        img/inicio-2560.avif 2560w
+      "
+      imagesizes="100vw"
+      fetchpriority="high"
+    />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -47,7 +63,38 @@
     </nav>
 
     <header class="hero">
-      <div class="hero-bg" id="heroBg"></div>
+      <picture class="hero-bg" id="heroBg">
+        <source
+          type="image/avif"
+          srcset="
+            img/inicio-640.avif   640w,
+            img/inicio-960.avif   960w,
+            img/inicio-1280.avif 1280w,
+            img/inicio-1920.avif 1920w,
+            img/inicio-2560.avif 2560w
+          "
+          sizes="100vw"
+        />
+        <source
+          type="image/webp"
+          srcset="
+            img/inicio-640.webp   640w,
+            img/inicio-960.webp   960w,
+            img/inicio-1280.webp 1280w,
+            img/inicio-1920.webp 1920w,
+            img/inicio-2560.webp 2560w
+          "
+          sizes="100vw"
+        />
+        <img
+          src="img/inicio-1280.jpg"
+          alt="Área de trabajo compartido de The Haus Coworking en Arequipa"
+          width="2560"
+          height="1707"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
       <div class="hero-gradient"></div>
       <div class="hero-noise"></div>
 
@@ -199,12 +246,30 @@
 
         <div class="bento reveal-scale">
           <div class="zona">
-            <div
-              class="zona-img"
-              style="
-                background-image: url(&quot;img/trabajo-compartido.jpeg&quot;);
-              "
-            ></div>
+            <picture class="zona-img">
+              <source
+                type="image/avif"
+                srcset="
+                  img/trabajo-compartido-400.avif 400w,
+                  img/trabajo-compartido-700.avif 700w
+                "
+                sizes="(max-width: 900px) 100vw, 45vw"
+              />
+              <source
+                type="image/webp"
+                srcset="
+                  img/trabajo-compartido-400.webp 400w,
+                  img/trabajo-compartido-700.webp 700w
+                "
+                sizes="(max-width: 900px) 100vw, 45vw"
+              />
+              <img
+                src="img/trabajo-compartido-700.jpg"
+                alt="Escritorios de hot desking en la zona de trabajo compartido"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <div class="zona-info">
               <span class="zona-tag">Comunidad</span>
               <span class="zona-num">01</span>
@@ -222,12 +287,32 @@
             </div>
           </div>
           <div class="zona">
-            <div
-              class="zona-img"
-              style="
-                background-image: url(&quot;img/oficina-privada.jpeg&quot;);
-              "
-            ></div>
+            <picture class="zona-img">
+              <source
+                type="image/avif"
+                srcset="
+                  img/oficina-privada-400.avif   400w,
+                  img/oficina-privada-700.avif   700w,
+                  img/oficina-privada-1000.avif 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <source
+                type="image/webp"
+                srcset="
+                  img/oficina-privada-400.webp   400w,
+                  img/oficina-privada-700.webp   700w,
+                  img/oficina-privada-1000.webp 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <img
+                src="img/oficina-privada-700.jpg"
+                alt="Oficina privada para equipos pequeños"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <div class="zona-info">
               <span class="zona-tag">Foco y privacidad</span>
               <span class="zona-num">02</span>
@@ -246,10 +331,32 @@
           </div>
 
           <div class="zona">
-            <div
-              class="zona-img"
-              style="background-image: url(&quot;img/sala-juntas.jpeg&quot;)"
-            ></div>
+            <picture class="zona-img">
+              <source
+                type="image/avif"
+                srcset="
+                  img/sala-juntas-400.avif   400w,
+                  img/sala-juntas-700.avif   700w,
+                  img/sala-juntas-1000.avif 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <source
+                type="image/webp"
+                srcset="
+                  img/sala-juntas-400.webp   400w,
+                  img/sala-juntas-700.webp   700w,
+                  img/sala-juntas-1000.webp 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <img
+                src="img/sala-juntas-700.jpg"
+                alt="Sala de juntas equipada para reuniones de directorio"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <div class="zona-info">
               <span class="zona-tag">Premium</span>
               <span class="zona-num">03 </span>
@@ -268,10 +375,32 @@
           </div>
 
           <div class="zona">
-            <div
-              class="zona-img"
-              style="background-image: url(&quot;img/auditorio.jpeg&quot;)"
-            ></div>
+            <picture class="zona-img">
+              <source
+                type="image/avif"
+                srcset="
+                  img/auditorio-400.avif   400w,
+                  img/auditorio-700.avif   700w,
+                  img/auditorio-1000.avif 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <source
+                type="image/webp"
+                srcset="
+                  img/auditorio-400.webp   400w,
+                  img/auditorio-700.webp   700w,
+                  img/auditorio-1000.webp 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <img
+                src="img/auditorio-700.jpg"
+                alt="Auditorio con capacidad para 30 personas"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <div class="zona-info">
               <span class="zona-tag">Eventos</span>
               <span class="zona-num">04</span>
@@ -290,10 +419,32 @@
           </div>
 
           <div class="zona">
-            <div
-              class="zona-img"
-              style="background-image: url(&quot;img/sala-privada.jpeg&quot;)"
-            ></div>
+            <picture class="zona-img">
+              <source
+                type="image/avif"
+                srcset="
+                  img/sala-privada-400.avif   400w,
+                  img/sala-privada-700.avif   700w,
+                  img/sala-privada-1000.avif 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <source
+                type="image/webp"
+                srcset="
+                  img/sala-privada-400.webp   400w,
+                  img/sala-privada-700.webp   700w,
+                  img/sala-privada-1000.webp 1000w
+                "
+                sizes="(max-width: 900px) 100vw, 25vw"
+              />
+              <img
+                src="img/sala-privada-700.jpg"
+                alt="Lounge de la sala de estar para pausas y reuniones casuales"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <div class="zona-info">
               <span class="zona-tag">Relax</span>
               <span class="zona-num">05</span>
