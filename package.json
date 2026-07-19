@@ -4,9 +4,11 @@
   "private": true,
   "description": "Landing de The Haus Coworking · Arequipa",
   "scripts": {
-    "img": "node scripts/optimize-images.mjs"
+    "img": "node scripts/optimize-images.mjs",
+    "fonts": "node scripts/build-fonts.mjs"
   },
   "devDependencies": {
-    "sharp": "^0.34.4"
+    "sharp": "^0.34.4",
+    "wawoff2": "^2.0.1"
   }
 }

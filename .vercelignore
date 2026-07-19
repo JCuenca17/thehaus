@@ -6,3 +6,6 @@ package-lock.json
 # Fuentes de alta resolución: solo se usan localmente para regenerar variantes
 img/originals
 img/hero-placeholder.txt
+
+# Los .otf son el origen de los .woff2; el navegador ya no los pide
+*.otf

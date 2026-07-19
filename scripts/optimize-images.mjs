@@ -16,8 +16,16 @@ const OUT = "img";
 /* El hero es el LCP: necesita más escalones porque cubre toda la pantalla.
    Las zonas viven en un bento de tarjetas, nunca pasan de ~700px reales. */
 const PERFILES = {
-  hero: { anchos: [640, 960, 1280, 1920, 2560], calidad: { avif: 52, webp: 72 } },
-  zona: { anchos: [400, 700, 1000], calidad: { avif: 50, webp: 70 } },
+  hero: {
+    anchos: [640, 960, 1280, 1440, 1920, 2560],
+    fallback: 1280,
+    calidad: { avif: 52, webp: 72 },
+  },
+  zona: {
+    anchos: [400, 700, 1000],
+    fallback: 700,
+    calidad: { avif: 50, webp: 70 },
+  },
 };
 
 const HERO = "inicio";
@@ -50,8 +58,10 @@ async function generar(archivo) {
       .toFile(path.join(OUT, `${nombre}-${ancho}.webp`));
   }
 
-  // Fallback JPEG en el ancho intermedio, para navegadores sin AVIF ni WebP.
-  const anchoFallback = perfil.anchos[Math.floor(perfil.anchos.length / 2)];
+  // Fallback JPEG para navegadores sin AVIF ni WebP. El ancho es fijo y
+  // explícito: si dependiera del array, añadir un escalón movería el archivo
+  // al que apunta el src del HTML.
+  const anchoFallback = perfil.fallback;
   await sharp(entrada)
     .resize({ width: Math.min(anchoFallback, meta.width), withoutEnlargement: true })
     .jpeg({ quality: 78, mozjpeg: true })
