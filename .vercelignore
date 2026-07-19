@@ -1,0 +1,8 @@
+node_modules
+scripts
+package.json
+package-lock.json
+
+# Fuentes de alta resolución: solo se usan localmente para regenerar variantes
+img/originals
+img/hero-placeholder.txt
