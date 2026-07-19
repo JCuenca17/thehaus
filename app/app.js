@@ -294,3 +294,12 @@ $("btnReservas").addEventListener("click", () => hoja.abrir(listaDeReservas()));
 
 pintarFiltros();
 refrescar();
+
+/* ─── Instalable ─── */
+/* El registro va al final y sin bloquear: si falla, la aplicacion sigue
+   funcionando igual, solo pierde el modo sin conexion. */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js", { scope: "/app/" }).catch(() => {});
+  });
+}

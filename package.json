@@ -6,7 +6,8 @@
   "scripts": {
     "img": "node scripts/optimize-images.mjs",
     "fonts": "node scripts/build-fonts.mjs",
-    "icons": "node scripts/build-icons.mjs"
+    "icons": "node scripts/build-icons.mjs",
+    "pwa-icons": "node scripts/build-pwa-icons.mjs"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^6.5.1",
