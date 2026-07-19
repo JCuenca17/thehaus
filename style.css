@@ -201,6 +201,28 @@ a {
     border-color 0.4s ease;
   border-bottom: 1px solid transparent;
 }
+/* Sin scroll la cabecera es transparente y se apoya en la foto del hero,
+   que en su parte alta es clara: el logo y el hamburguesa son blancos y se
+   pierden. Este velo los sostiene sin ensuciar la imagen, y se retira en
+   cuanto la cabecera gana fondo propio. */
+#nav::before {
+  content: "";
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 150px;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.42),
+    rgba(0, 0, 0, 0.16) 55%,
+    transparent
+  );
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+#nav.scrolled::before {
+  opacity: 0;
+}
 #nav.scrolled {
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(18px);
@@ -434,6 +456,12 @@ a {
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
+  /* El fondo lleva will-change: transform, asi que el navegador lo sube a
+     su propia capa de composicion. Sin esto el hero no es contexto de
+     apilado y esa capa queda suelta en la raiz, compitiendo con la
+     cabecera y el menu; encerrandola aqui el orden deja de depender de
+     como resuelva cada navegador. */
+  isolation: isolate;
 }
 
 .hero-bg {

@@ -147,10 +147,45 @@ No se atribuyen a la primera cuenta que se cree: eso haria que alguien
 abriera la aplicacion y heredase reservas que no hizo. Inventar propiedad
 sobre unos datos es peor que perder datos de demostracion.
 
+## Cancelaciones
+
+Se cancela un dia suelto o la reserva entera. **Plazo libre hasta las 18:00
+del dia anterior**; el espacio vuelve al fondo comun en el acto.
+
+Pasado el plazo tambien se puede cancelar, y es deliberado: como se paga en
+el local, una cancelacion tardia no cuesta una devolucion, cuesta un puesto
+vacio. Un puesto liberado a las 8 de la manana todavia lo puede ocupar
+alguien; uno bloqueado por orgullo del sistema no lo ocupa nadie. Lo unico
+que no se cancela es un dia ya empezado, porque ya esta consumido.
+
+**Sin penalizacion en la primera version.** No hay cobro que retener, y una
+multa que no se puede ejecutar es decorado. Lo que si se guarda es la marca
+de cancelacion tardia: si las ausencias llegan a ser un problema real, la
+decision se tomara con datos y no a ojo.
+
+```sql
+alter table reservas
+  add column cancelada_en timestamptz,
+  add column cancelacion_tardia boolean not null default false;
+```
+
+Las filas no se borran: una reserva cancelada que desaparece no se puede
+contar despues. La vista publica de ocupacion filtra `cancelada_en is null`.
+
+### El descuento se recalcula
+
+Quien reserva 10 dias entra en el tramo del 15 % y cancela 4, se queda con
+6 dias: **pasa al tramo del 10 % y el importe de los dias que siguen en pie
+se rehace**. Si no, o cobras 6 dias a precio de 10 —que es cobrar de mas— o
+abres la puerta a reservar 20 dias, cancelar 15 y quedarte el 25 %.
+
+La aplicacion lo dice **antes** de confirmar la cancelacion, con el importe
+nuevo a la vista. Nadie deberia enterarse de que subio el precio al llegar
+al mostrador. Como todavia no se ha cobrado nada, rehacer el importe es
+solo aritmetica.
+
 ## Pendiente de decidir
 
-- **Cancelaciones**: plazo y consecuencia. Hay que escribirlo antes de
-  programarlo.
 - **Ley 29733 (datos personales, Peru)**: se van a guardar nombres,
   contactos y habitos de asistencia. Necesita politica de privacidad y
   consentimiento. No se resuelve con codigo.
