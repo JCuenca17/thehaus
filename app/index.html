@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1"
+    />
+    <meta name="theme-color" content="#0c0c0c" />
+    <meta name="robots" content="noindex" />
+    <title>Reservar · The Haus</title>
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="../fonts/bdsans-bold.woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="../fonts/inter-latin-var.woff2"
+      crossorigin
+    />
+
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body class="app-body">
+    <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-arrow-right" viewBox="0 0 448 512"><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></symbol>
+      <symbol id="i-xmark" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 448 512"><path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/></symbol>
+      <symbol id="i-minus" viewBox="0 0 448 512"><path d="M432 256c0 17.7-14.3 32-32 32L48 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z"/></symbol>
+      <symbol id="i-expand" viewBox="0 0 448 512"><path d="M32 32C14.3 32 0 46.3 0 64v96c0 17.7 14.3 32 32 32s32-14.3 32-32V96h64c17.7 0 32-14.3 32-32s-14.3-32-32-32H32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32v96c0 17.7 14.3 32 32 32h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H64V352zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32h64v64c0 17.7 14.3 32 32 32s32-14.3 32-32V64c0-17.7-14.3-32-32-32H320zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32v64H320c-17.7 0-32 14.3-32 32s14.3 32 32 32h96c17.7 0 32-14.3 32-32V352z"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 448 512"><path d="M128 0c17.7 0 32 14.3 32 32V64H288V32c0-17.7 14.3-32 32-32s32 14.3 32 32V64h48c26.5 0 48 21.5 48 48v48H0V112C0 85.5 21.5 64 48 64H96V32c0-17.7 14.3-32 32-32zM0 192H448V464c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V192z"/></symbol>
+    </svg>
+
+    <header class="app-cabecera">
+      <a href="../" class="app-logo">
+        <span class="logo-main">the haus</span>
+        <span class="logo-sub">Reservar</span>
+      </a>
+      <button class="app-tab" id="btnReservas" type="button">
+        Mis reservas <span class="app-contador" id="contadorReservas" hidden>0</span>
+      </button>
+    </header>
+
+    <div class="app-filtros">
+      <div class="filtro-dias" id="filtroDias" role="tablist" aria-label="Elegir día"></div>
+      <div class="filtro-franjas" id="filtroFranjas" role="tablist" aria-label="Elegir franja"></div>
+    </div>
+
+    <main class="app-lienzo" id="lienzo">
+      <div class="app-capa" id="capaMapa"></div>
+
+      <div class="app-controles">
+        <button type="button" id="btnAcercar" aria-label="Acercar">
+          <svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg>
+        </button>
+        <button type="button" id="btnAlejar" aria-label="Alejar">
+          <svg class="ico" aria-hidden="true"><use href="#i-minus" /></svg>
+        </button>
+        <button type="button" id="btnEncajar" aria-label="Encajar plano">
+          <svg class="ico" aria-hidden="true"><use href="#i-expand" /></svg>
+        </button>
+      </div>
+
+      <div class="app-resumen" id="resumen" aria-live="polite"></div>
+    </main>
+
+    <div class="hoja" id="hoja" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="hoja-velo"></div>
+      <div class="hoja-panel" tabindex="-1">
+        <div class="hoja-tirador" aria-hidden="true"></div>
+        <div class="hoja-cabecera">
+          <button class="hoja-cerrar" type="button" aria-label="Cerrar">
+            <svg class="ico" aria-hidden="true"><use href="#i-xmark" /></svg>
+          </button>
+        </div>
+        <div class="hoja-cuerpo" id="hojaCuerpo"></div>
+      </div>
+    </div>
+
+    <div class="app-aviso" id="aviso" role="status" aria-live="polite"></div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
