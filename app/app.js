@@ -28,6 +28,7 @@ import {
   olvidarCuenta,
   MOTIVOS,
 } from "../js/sesion-simulada.js";
+import { procesarPago, RESULTADOS, MOTIVOS_PAGO } from "../js/pagos-simulados.js";
 import {
   estadosDeRango,
   disponibilidadDe,
@@ -269,13 +270,29 @@ function bloqueImporte(pres, fechas) {
   return frag;
 }
 
-/** Guarda una reserva de N dias y avisa; devuelve si salio bien */
+/** Punto de entrada del cobro: sin sesion no se paga; con ella, a la pasarela */
 function reservar(unidad, fechas) {
+  if (!obtenerSesion()) {
+    hoja.cerrar();
+    mostrarPuerta();
+    return;
+  }
+  const pres = presupuesto(unidad.zona, estado.franja, fechas.length);
+  hoja.abrir(hojaPago(unidad, fechas, pres));
+}
+
+/**
+ * Escribe la reserva DESPUES de que el pago se apruebe, no antes. Se
+ * revalida al escribir (crearReservaMultiple), asi que si alguien cogio el
+ * sitio durante el pago, el choque se detecta aqui y el usuario se entera
+ * en vez de quedarse con una reserva fantasma.
+ */
+function confirmarReserva(unidad, fechas, referencia) {
   const cuenta = obtenerSesion();
   if (!cuenta) {
     hoja.cerrar();
     mostrarPuerta();
-    return false;
+    return null;
   }
 
   const pres = presupuesto(unidad.zona, estado.franja, fechas.length);
@@ -290,28 +307,10 @@ function reservar(unidad, fechas) {
     importes,
     titular: cuenta.nombre,
     contacto: cuenta.contacto,
+    referencia,
   });
-
-  hoja.cerrar();
-
-  if (!res.ok) {
-    avisar(
-      res.motivo === "almacenamiento"
-        ? "No se pudo guardar: almacenamiento no disponible"
-        : `Alguien acaba de coger el ${fechaCorta(res.fecha)}`,
-    );
-    refrescar();
-    return false;
-  }
-
   refrescar();
-  avisar(
-    fechas.length === 1
-      ? `${unidad.nombre} reservado`
-      : `${unidad.nombre}, ${fechas.length} días reservados`,
-    { texto: "Deshacer", hacer: () => { cancelarGrupo(res.grupoId); refrescar(); } },
-  );
-  return true;
+  return res;
 }
 
 function fichaDeUnidad(unidad) {
@@ -404,6 +403,152 @@ function fichaDeUnidad(unidad) {
   frag.appendChild(btn);
 
   if (parcial) frag.appendChild(botonVerLibres());
+  return frag;
+}
+
+/**
+ * Pasarela simulada. El resultado no sale de unos datos —no hay campos de
+ * tarjeta, a proposito— sino de tres botones: aprobado, rechazado y
+ * caducado. Todo lo demas (importe, \"procesando\", que la reserva solo se
+ * escriba si se aprueba) es el flujo real.
+ */
+function hojaPago(unidad, fechas, pres) {
+  const frag = document.createDocumentFragment();
+
+  const titulo = document.createElement("h2");
+  titulo.className = "hoja-titulo";
+  titulo.textContent = "Pago";
+  frag.appendChild(titulo);
+
+  const meta = document.createElement("p");
+  meta.className = "hoja-meta";
+  meta.textContent =
+    fechas.length === 1
+      ? `${unidad.nombre} · ${fechaCorta(fechas[0])}`
+      : `${unidad.nombre} · ${fechas.length} días`;
+  frag.appendChild(meta);
+
+  frag.appendChild(bloqueImporte(pres, fechas));
+
+  const zona = document.createElement("div");
+  zona.className = "pago-zona";
+  frag.appendChild(zona);
+
+  // Pinta los tres botones; se rehace en cada intento para volver a este
+  // punto tras un rechazo sin arrastrar botones desactivados
+  const elegir = () => {
+    const aviso = document.createElement("p");
+    aviso.className = "pago-demo";
+    aviso.innerHTML =
+      "<strong>Simulación</strong> · no se cobra nada. Elige un resultado para probar el flujo.";
+
+    const acciones = document.createElement("div");
+    acciones.className = "pago-acciones";
+
+    const opciones = [
+      [RESULTADOS.APROBADO, `Simular pago aprobado · ${formatear(pres.total)}`, "btn-dark"],
+      [RESULTADOS.RECHAZADO, "Simular pago rechazado", "btn-ghost-oscuro"],
+      [RESULTADOS.CADUCADO, "Simular sesión caducada", "btn-ghost-oscuro"],
+    ];
+    for (const [resultado, texto, estilo] of opciones) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = `btn ${estilo} hoja-accion`;
+      b.textContent = texto;
+      b.addEventListener("click", () => procesar(resultado));
+      acciones.appendChild(b);
+    }
+    zona.replaceChildren(aviso, acciones);
+  };
+
+  const procesar = async (resultado) => {
+    // \"Procesando\": botones fuera para que no se pulse dos veces, que es lo
+    // que habria que manejar con una pasarela de verdad
+    const cargando = document.createElement("p");
+    cargando.className = "pago-procesando";
+    cargando.textContent = "Procesando el pago…";
+    zona.replaceChildren(cargando);
+
+    const pago = await procesarPago({ resultado, importe: pres.total });
+
+    if (pago.resultado !== RESULTADOS.APROBADO) {
+      mostrarFallo(pago.resultado);
+      return;
+    }
+
+    const res = confirmarReserva(unidad, fechas, pago.referencia);
+    if (!res?.ok) {
+      // El pago se aprobo pero el sitio se ocupo mientras tanto. En real
+      // esto es una devolucion; aqui, como no se cobro, solo se avisa.
+      mostrarChoque(res);
+      return;
+    }
+    mostrarExito(pago.referencia);
+  };
+
+  const mostrarFallo = (resultado) => {
+    const caja = document.createElement("div");
+    caja.className = "pago-resultado pago-fallo";
+    caja.innerHTML = `<p class="pago-icono" aria-hidden="true">✕</p><p>${MOTIVOS_PAGO[resultado]}</p>`;
+
+    const reintentar = document.createElement("button");
+    reintentar.type = "button";
+    reintentar.className = "btn btn-dark hoja-accion";
+    reintentar.textContent = "Volver a intentar";
+    reintentar.addEventListener("click", elegir);
+
+    const volver = document.createElement("button");
+    volver.type = "button";
+    volver.className = "enlace-sutil pago-volver";
+    volver.textContent = "Volver al plano";
+    volver.addEventListener("click", () => hoja.cerrar());
+
+    zona.replaceChildren(caja, reintentar, volver);
+  };
+
+  const mostrarChoque = (res) => {
+    const caja = document.createElement("div");
+    caja.className = "pago-resultado pago-fallo";
+    const cual = res?.fecha ? ` el ${fechaCorta(res.fecha)}` : "";
+    caja.innerHTML =
+      `<p class="pago-icono" aria-hidden="true">✕</p>` +
+      `<p>Alguien reservó este sitio${cual} mientras pagabas. No se te ha cobrado.</p>`;
+    const volver = document.createElement("button");
+    volver.type = "button";
+    volver.className = "btn btn-dark hoja-accion";
+    volver.textContent = "Volver al plano";
+    volver.addEventListener("click", () => hoja.cerrar());
+    zona.replaceChildren(caja, volver);
+  };
+
+  const mostrarExito = (referencia) => {
+    const caja = document.createElement("div");
+    caja.className = "pago-resultado pago-exito";
+    const cuando =
+      fechas.length === 1
+        ? fechaLarga(fechas[0])
+        : `${fechas.length} días · ${fechaCorta(fechas[0])} – ${fechaCorta(fechas.at(-1))}`;
+    caja.innerHTML =
+      `<p class="pago-icono" aria-hidden="true">✓</p>` +
+      `<p><strong>${unidad.nombre} reservado</strong></p>` +
+      `<p class="pago-detalle">${cuando}<br>Pago simulado · referencia ${referencia}</p>`;
+
+    const listo = document.createElement("button");
+    listo.type = "button";
+    listo.className = "btn btn-dark hoja-accion";
+    listo.textContent = "Listo";
+    listo.addEventListener("click", () => hoja.cerrar());
+
+    const ver = document.createElement("button");
+    ver.type = "button";
+    ver.className = "enlace-sutil pago-volver";
+    ver.textContent = "Ver en Mis reservas";
+    ver.addEventListener("click", () => hoja.abrir(listaDeReservas()));
+
+    zona.replaceChildren(caja, listo, ver);
+  };
+
+  elegir();
   return frag;
 }
 

@@ -517,6 +517,70 @@
   font-size: 15px;
 }
 
+/* ─── Pasarela simulada ─── */
+.pago-zona {
+  margin-top: 20px;
+}
+.pago-demo {
+  margin-bottom: 14px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: var(--crudo);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--negro-60);
+}
+.pago-demo strong {
+  color: var(--negro);
+  font-weight: 700;
+}
+.pago-acciones {
+  display: grid;
+  gap: 10px;
+}
+.pago-acciones .hoja-accion {
+  margin-top: 0;
+}
+.pago-procesando {
+  padding: 28px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--negro-60);
+}
+.pago-resultado {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  padding: 12px 0 20px;
+}
+.pago-icono {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.pago-exito .pago-icono {
+  background: rgba(95, 191, 143, 0.18);
+  color: #2f8f63;
+}
+.pago-fallo .pago-icono {
+  background: rgba(192, 57, 43, 0.12);
+  color: #c0392b;
+}
+.pago-detalle {
+  font-size: 13px;
+  color: var(--negro-60);
+  line-height: 1.6;
+}
+.pago-volver {
+  display: block;
+  margin: 12px auto 0;
+}
+
 /* ─── Días sueltos de una reserva de varios días ─── */
 .reserva-grupo {
   flex-wrap: wrap;

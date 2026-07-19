@@ -245,7 +245,7 @@ export function estadosDeRango(fechas, franja) {
  * `importes` llega ya calculado por tarifas.js: este modulo no sabe de
  * precios ni de descuentos, solo guarda lo que le dan.
  */
-export function crearReservaMultiple({ unidadId, nombre, zona, fechas, franja, importes, titular, contacto }) {
+export function crearReservaMultiple({ unidadId, nombre, zona, fechas, franja, importes, titular, contacto, referencia }) {
   if (!fechas.length) return { ok: false, motivo: "sin-dias" };
 
   const reservas = leerTodas();
@@ -270,6 +270,9 @@ export function crearReservaMultiple({ unidadId, nombre, zona, fechas, franja, i
     importe: importes[i],
     titular,
     contacto,
+    // Referencia del pago que confirmo la reserva. Con backend sera la de
+    // la pasarela real; hoy la de pagos-simulados.js
+    referencia,
     creada,
   }));
 

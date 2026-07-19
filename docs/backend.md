@@ -37,12 +37,26 @@ una suscripcion, y arrastra cobro recurrente, renovaciones y bajas. El
 descuento por tramos encaja con el modelo actual —una fila por dia— y se
 puede abrir ya. Los abonos se anaden despues, cuando haya cobro.
 
-## 3. Pago: en el local
+## 3. Pago: en linea, al reservar
 
-La aplicacion reserva; se paga al llegar. Sin pasarela de pago.
+La reserva se confirma cuando el pago se aprueba. **La reserva se escribe
+despues del pago, no antes**: la disponibilidad se revalida al escribir,
+asi que si alguien coge el sitio durante el pago, el choque se detecta ahi
+y —con cobro real— se devuelve.
 
-**Por que:** integrar cobros anade obligaciones fiscales y de datos que no
-hacen falta para abrir. Se puede anadir despues sin rehacer las reservas.
+Hoy es una simulacion (`js/pagos-simulados.js`) con tres caminos:
+aprobado, rechazado y caducado. **No hay campos de tarjeta, ni siquiera
+simulados**: un formulario que pida el numero en una URL publica ensena a
+la gente a escribirlo sin nada que lo cifre ni lo cobre, y una tarjeta
+sirve en cualquier otra parte. El resultado lo elige quien prueba con tres
+botones; todo lo que rodea a esa eleccion es el flujo real.
+
+**Cambio respecto a la decision inicial:** se penso abrir cobrando en el
+local para no arrastrar obligaciones fiscales y de datos. Se pasa a pago en
+linea porque el front ya ensaya ese flujo y montarlo despues obligaria a
+rehacer la confirmacion de la reserva. Cuando entre pasarela real, quien la
+integre reemplaza el archivo simulado por uno que devuelva el mismo
+resultado; **la integracion de la pasarela no se hace en el cliente**.
 
 ## 4. Cuenta obligatoria
 
@@ -117,6 +131,7 @@ exclusion sobre rangos horarios— **nunca solo en el cliente**.
 | Modulo                     | Cambio                                                    |
 | -------------------------- | --------------------------------------------------------- |
 | `js/sesion-simulada.js`    | **Se borra entero**; lo reemplaza la sesion de Supabase     |
+| `js/pagos-simulados.js`    | **Se borra entero**; lo reemplaza la pasarela real          |
 | `js/reservas.js`           | Por dentro pasa a la API; se mantiene la firma publica     |
 | `js/tarifas.js`            | Los precios vienen de la base de datos                     |
 | `js/planta.js`             | Sin cambios                                                |
