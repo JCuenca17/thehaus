@@ -31,6 +31,9 @@ const centro = ({ x, y, w, h }) => [aX(x + w / 2), aZ(y + h / 2)];
 
 const COLOR_ESTADO = {
   libre: 0x5fbf8f,
+  // Entre el verde de libre y el gris de ocupado, porque eso es lo que es:
+  // sirve algunos dias de los pedidos y otros no
+  parcial: 0xc9d16b,
   reservado: 0xe0a33c,
   ocupado: 0xb9bec6,
 };
@@ -561,7 +564,9 @@ export function crearEscena(contenedor, opciones = {}) {
     },
     obtenerEstado: (id) => estados.get(id) ?? null,
     resumen() {
-      const total = { libre: 0, reservado: 0, ocupado: 0 };
+      // Se parte de ESTADOS y no de una lista escrita a mano: al anadir
+      // "parcial" este contador se quedaba sin su casilla y sumaba NaN
+      const total = Object.fromEntries(ESTADOS.map((e) => [e, 0]));
       for (const e of estados.values()) total[e]++;
       return total;
     },

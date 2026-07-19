@@ -193,7 +193,11 @@ export const RESERVABLES = [
   ...ESPACIOS.map((e) => ({ ...e, unidad: "espacio" })),
 ];
 
-export const ESTADOS = ["libre", "reservado", "ocupado"];
+/**
+ * "parcial" solo aparece al reservar varios dias: la unidad esta libre
+ * algunos de los dias pedidos y ocupada otros. Con un solo dia nunca se da.
+ */
+export const ESTADOS = ["libre", "parcial", "reservado", "ocupado"];
 
 /** Superficie en m2 de cualquier rectangulo del modelo */
 export const areaM2 = ({ w, h }) => (w * h) / 10000;
