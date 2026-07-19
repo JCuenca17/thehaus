@@ -30,6 +30,26 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* ─── ICONOS ─── */
+/* El sprite solo define simbolos; nada de el se pinta directamente */
+.sprite {
+  display: none;
+}
+/* Dimensionados en em y con fill heredado, para que las reglas de
+   font-size y color de cada contenedor los sigan gobernando */
+.ico {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.ico-xs {
+  font-size: 0.75em;
+}
+.ico-2xs {
+  font-size: 0.625em;
+}
+
 /* ─── DESIGN TOKENS ─── */
 :root {
   --negro: #0c0c0c;
