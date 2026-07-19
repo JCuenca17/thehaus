@@ -1,6 +1,9 @@
 /**
  * Desplazamiento y zoom del plano.
  *
+ * El zoom se hace con los botones o con pellizco tactil, nunca con la
+ * rueda ni con el trackpad.
+ *
  * Actua sobre una capa intermedia con transform, no sobre el viewBox del
  * SVG: asi el navegador compone en GPU y no rehace el layout en cada
  * fotograma. Con mas de mil poligonos la diferencia se nota.
@@ -63,26 +66,12 @@ export function crearPanZoom(contenedor, capa, opciones = {}) {
     aplicar();
   };
 
-  contenedor.addEventListener(
-    "wheel",
-    (e) => {
-      if (esControl(e.target)) return;
-      e.preventDefault();
-
-      // Un trackpad dispara decenas de eventos diminutos donde un raton
-      // manda uno grande. Con un factor fijo por evento el zoom se
-      // dispara; escalarlo por el desplazamiento real lo iguala.
-      const porUnidad = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
-      const desplazamiento = e.deltaY * porUnidad;
-
-      // El pellizco de trackpad llega como rueda con ctrl pulsado
-      const sensibilidad = e.ctrlKey ? 0.006 : 0.0013;
-      const factor = Math.exp(-desplazamiento * sensibilidad);
-
-      zoomEn(Math.min(1.5, Math.max(0.67, factor)), e.clientX, e.clientY);
-    },
-    { passive: false },
-  );
+  /* El zoom con rueda y trackpad esta quitado a proposito. Por muy fina
+     que se afine la sensibilidad, un trackpad acaba disparando el zoom sin
+     que nadie lo haya pedido mientras se recorre el plano. El zoom queda en
+     los botones, que son deliberados, y en el pellizco tactil. Solo se
+     frena el desplazamiento para que el gesto no arrastre la pagina. */
+  contenedor.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
 
   contenedor.addEventListener("pointerdown", (e) => {
     if (esControl(e.target)) return;

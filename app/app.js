@@ -400,7 +400,9 @@ alPulsar("btnGirar", () => {
   mapa.girar(1);
   // girar() reconstruye el SVG desde cero, asi que hay que repintar estado
   refrescar();
-  panzoom.reiniciar();
+  // Antes se reencuadraba aqui, lo que tiraba el zoom del usuario en cada
+  // giro. Ya no hace falta: el encuadre es el mismo en las cuatro
+  // orientaciones, asi que el plano no se descoloca al girar.
 });
 
 alPulsar("btnAcercar", () => panzoom.acercar());

@@ -339,7 +339,9 @@ export function renderizarMapa(contenedor, opciones = {}) {
     girar(pasos = 1) {
       objetivo += pasos;
 
-      if (vista !== "isometrico" || sinMovimiento()) {
+      // Con la pestana oculta requestAnimationFrame no llega a dispararse,
+      // asi que animar dejaria el giro sin empezar siquiera
+      if (vista !== "isometrico" || sinMovimiento() || document.hidden) {
         giro = objetivo = normalizar(objetivo);
         construir();
       } else {
