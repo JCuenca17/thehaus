@@ -23,7 +23,21 @@ export function crearPanZoom(contenedor, capa, opciones = {}) {
   let arrastrando = false;
   let movimiento = 0;
 
+  /* El plano no se puede arrastrar fuera de la vista: siempre queda al
+     menos un margen visible por cada lado. Sin esto es facil perderlo y
+     no saber como recuperarlo. */
+  const contener = () => {
+    const caja = contenedor.getBoundingClientRect();
+    const margen = Math.min(caja.width, caja.height) * 0.4;
+    const anchoEscalado = caja.width * escala;
+    const altoEscalado = caja.height * escala;
+
+    x = Math.min(caja.width - margen, Math.max(margen - anchoEscalado, x));
+    y = Math.min(caja.height - margen, Math.max(margen - altoEscalado, y));
+  };
+
   const aplicar = () => {
+    contener();
     capa.style.transform = `translate(${x}px, ${y}px) scale(${escala})`;
   };
 

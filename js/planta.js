@@ -36,7 +36,7 @@ export const ZONAS = [
     id: "coworking",
     nombre: "Trabajo compartido",
     unidad: "puesto",
-    rect: { x: 0, y: 540, w: 1250, h: 740 },
+    rect: { x: 0, y: 540, w: 1250, h: 700 },
   },
   {
     id: "juntas",
@@ -54,9 +54,9 @@ export const ZONAS = [
 
 /* Servicios: se dibujan pero no se reservan ni cambian de color */
 export const SERVICIOS = [
-  { id: "recepcion", nombre: "Recepción", rect: { x: 0, y: 1310, w: 500, h: 90 } },
-  { id: "cocina", nombre: "Cocina", rect: { x: 520, y: 1310, w: 620, h: 90 } },
-  { id: "aseos", nombre: "Aseos", rect: { x: 1160, y: 1310, w: 480, h: 90 } },
+  { id: "recepcion", nombre: "Recepción", rect: { x: 0, y: 1260, w: 380, h: 140 } },
+  { id: "cafeteria", nombre: "Cafetería", rect: { x: 400, y: 1260, w: 480, h: 140 } },
+  { id: "aseos", nombre: "Aseos", rect: { x: 900, y: 1260, w: 350, h: 140 } },
 ];
 
 /* ─── Espacios reservables completos ─── */

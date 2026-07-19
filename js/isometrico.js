@@ -4,6 +4,11 @@
  * No define geometria propia: toma los mismos rectangulos de planta.js y
  * los proyecta. Cambiar de vista plana a isometrica no toca el modelo.
  *
+ * El plano gira en pasos de 90 grados. Se rota en coordenadas de planta,
+ * antes de proyectar, no con un transform del SVG: girando el SVG entero
+ * girarian tambien las etiquetas y las caras dejarian de corresponder con
+ * la orientacion de la luz.
+ *
  * Convencion: +x va a la derecha y abajo, +y a la izquierda y abajo, y la
  * elevacion z sube en pantalla. Las dos caras laterales visibles son
  * siempre la de x maximo y la de y maxima.
@@ -14,72 +19,103 @@ const RAD = Math.PI / 180;
 /** Altura de extrusion por tipo de elemento, en cm */
 export const ALTURAS = {
   zona: 0,
-  servicio: 18,
+  servicio: 8,
   puesto: 46,
   espacio: 78,
 };
 
-export function crearProyeccion({ angulo = 30 } = {}) {
+export const GIROS = 4;
+
+export function crearProyeccion({ local, angulo = 30, giro = 0 } = {}) {
   const cos = Math.cos(angulo * RAD);
   const sen = Math.sin(angulo * RAD);
 
+  const cx = local.ancho / 2;
+  const cy = local.alto / 2;
+  const pasos = ((giro % GIROS) + GIROS) % GIROS;
+
+  /** Rota un punto de planta alrededor del centro del local */
+  const rotar = (x, y) => {
+    let dx = x - cx;
+    let dy = y - cy;
+    for (let i = 0; i < pasos; i++) {
+      const t = dx;
+      dx = -dy;
+      dy = t;
+    }
+    return [cx + dx, cy + dy];
+  };
+
   /** Punto del plano (cm) → punto de pantalla */
-  const punto = (x, y, z = 0) => [(x - y) * cos, (x + y) * sen - z];
+  const punto = (x, y, z = 0) => {
+    const [rx, ry] = rotar(x, y);
+    return [(rx - ry) * cos, (rx + ry) * sen - z];
+  };
 
   const cadena = (puntos) => puntos.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
 
-  /** Poligono plano a ras de suelo (para zonas y suelos) */
-  const suelo = ({ x, y, w, h }, z = 0) =>
-    cadena([
-      punto(x, y, z),
-      punto(x + w, y, z),
-      punto(x + w, y + h, z),
-      punto(x, y + h, z),
-    ]);
+  /**
+   * Las cuatro esquinas de un rectangulo. Con giros de 90 grados un
+   * rectangulo sigue siendo un rectangulo, asi que basta con rotar las
+   * esquinas y conservar el orden.
+   */
+  const esquinas = ({ x, y, w, h }, z) => [
+    punto(x, y, z),
+    punto(x + w, y, z),
+    punto(x + w, y + h, z),
+    punto(x, y + h, z),
+  ];
+
+  const suelo = (rect, z = 0) => cadena(esquinas(rect, z));
 
   /**
-   * Prisma extruido: cara superior mas las dos caras laterales visibles.
-   * Se devuelven por separado para poder sombrearlas distinto.
+   * Prisma extruido: cara superior mas las dos caras laterales que dan al
+   * observador. Cuales son esas dos depende del giro, asi que se eligen
+   * comparando profundidad en vez de asumir siempre x+w e y+h.
    */
-  const prisma = ({ x, y, w, h }, altura) => ({
-    superior: cadena([
-      punto(x, y, altura),
-      punto(x + w, y, altura),
-      punto(x + w, y + h, altura),
-      punto(x, y + h, altura),
-    ]),
-    // Cara en x maximo
-    derecha: cadena([
-      punto(x + w, y, altura),
-      punto(x + w, y + h, altura),
-      punto(x + w, y + h, 0),
-      punto(x + w, y, 0),
-    ]),
-    // Cara en y maximo
-    izquierda: cadena([
-      punto(x, y + h, altura),
-      punto(x + w, y + h, altura),
-      punto(x + w, y + h, 0),
-      punto(x, y + h, 0),
-    ]),
-  });
+  const prisma = (rect, altura) => {
+    const arriba = esquinas(rect, altura);
+    const abajo = esquinas(rect, 0);
+
+    // De los cuatro lados del rectangulo, los dos visibles son aquellos
+    // cuyo punto medio queda mas abajo en pantalla que el centro
+    const centroY = arriba.reduce((a, p) => a + p[1], 0) / 4;
+    const caras = [];
+
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4;
+      const medioY = (arriba[i][1] + arriba[j][1]) / 2;
+      if (medioY <= centroY) continue;
+      caras.push(cadena([arriba[i], arriba[j], abajo[j], abajo[i]]));
+    }
+
+    return { superior: cadena(arriba), laterales: caras };
+  };
 
   /** Centro proyectado, para colocar etiquetas */
   const centro = ({ x, y, w, h }, z = 0) => punto(x + w / 2, y + h / 2, z);
 
   /**
-   * Marco que envuelve el local completo, ya con margen para la
-   * extrusion mas alta. Sirve de viewBox.
+   * Orden del pintor: lo mas lejano se dibuja antes. Tras rotar, la
+   * profundidad sigue creciendo con x + y en coordenadas ya giradas.
    */
-  const marco = ({ ancho, alto }, alturaMax = 0, margen = 60) => {
-    const esquinas = [
+  const profundidad = ({ rect }) => {
+    const [rx, ry] = rotar(rect.x + rect.w / 2, rect.y + rect.h / 2);
+    return rx + ry;
+  };
+
+  const porProfundidad = (a, b) => profundidad(a) - profundidad(b);
+
+  /** Marco que envuelve el local ya girado, con sitio para la extrusion */
+  const marco = (alturaMax = 0, margen = 60) => {
+    const puntos = [
       punto(0, 0),
-      punto(ancho, 0),
-      punto(ancho, alto),
-      punto(0, alto),
+      punto(local.ancho, 0),
+      punto(local.ancho, local.alto),
+      punto(0, local.alto),
     ];
-    const xs = esquinas.map((p) => p[0]);
-    const ys = esquinas.map((p) => p[1]);
+    const xs = puntos.map((p) => p[0]);
+    const ys = puntos.map((p) => p[1]);
 
     const minX = Math.min(...xs) - margen;
     const minY = Math.min(...ys) - alturaMax - margen;
@@ -88,19 +124,8 @@ export function crearProyeccion({ angulo = 30 } = {}) {
 
     return {
       viewBox: `${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX - minX).toFixed(1)} ${(maxY - minY).toFixed(1)}`,
-      ancho: maxX - minX,
-      alto: maxY - minY,
     };
   };
 
-  return { punto, suelo, prisma, centro, marco };
+  return { punto, suelo, prisma, centro, marco, porProfundidad };
 }
-
-/**
- * Orden del pintor: lo que esta mas lejos del observador se dibuja antes.
- * En esta proyeccion la profundidad crece con x + y.
- */
-export const porProfundidad = (a, b) => {
-  const clave = ({ rect }) => rect.x + rect.w / 2 + (rect.y + rect.h / 2);
-  return clave(a) - clave(b);
-};

@@ -287,6 +287,13 @@ mapa = renderizarMapa($("capaMapa"), {
 
 panzoom = crearPanZoom($("lienzo"), $("capaMapa"));
 
+$("btnGirar").addEventListener("click", () => {
+  mapa.girar(1);
+  // girar() reconstruye el SVG desde cero, asi que hay que repintar estado
+  refrescar();
+  panzoom.reiniciar();
+});
+
 $("btnAcercar").addEventListener("click", () => panzoom.acercar());
 $("btnAlejar").addEventListener("click", () => panzoom.alejar());
 $("btnEncajar").addEventListener("click", () => panzoom.reiniciar());

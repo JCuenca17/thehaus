@@ -5,13 +5,15 @@
  *  - Navegaciones: red primero, cache como red de seguridad. Si sirviera
  *    la cache primero, un despliegue nuevo tardaria una visita entera en
  *    verse.
- *  - Recursos estaticos: cache primero, porque van versionados por VERSION
- *    y solo cambian cuando cambia la version.
+ *  - Recursos estaticos: se sirve la copia guardada y en paralelo se pide
+ *    la de red para la proxima vez (stale-while-revalidate). Con cache
+ *    primero a secas habria que acordarse de subir VERSION en cada
+ *    despliegue o el usuario se quedaria con codigo viejo para siempre.
  *
  * Nada de esto cachea reservas: viven en localStorage, no en la red.
  */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `thehaus-app-${VERSION}`;
 
 const RECURSOS = [
@@ -78,16 +80,19 @@ self.addEventListener("fetch", (e) => {
   }
 
   e.respondWith(
-    caches.match(request).then(
-      (guardado) =>
-        guardado ??
-        fetch(request).then((res) => {
+    caches.match(request).then((guardado) => {
+      const desdeRed = fetch(request)
+        .then((res) => {
           if (res.ok) {
             const copia = res.clone();
             caches.open(CACHE).then((c) => c.put(request, copia));
           }
           return res;
-        }),
-    ),
+        })
+        .catch(() => guardado);
+
+      // Se responde ya con lo guardado; la red actualiza para la proxima
+      return guardado ?? desdeRed;
+    }),
   );
 });

@@ -1530,6 +1530,17 @@ a {
   fill: rgba(12, 12, 12, 0.45);
   text-anchor: middle;
 }
+/* Sobre mobiliario oscuro el gris se pierde: se refuerza con un halo
+   del color del suelo en vez de subir el peso del texto */
+.mapa--isometrico .servicio-etiqueta {
+  font-size: 32px;
+  font-weight: 600;
+  fill: rgba(12, 12, 12, 0.62);
+  paint-order: stroke;
+  stroke: var(--crudo);
+  stroke-width: 7;
+  stroke-linejoin: round;
+}
 
 /* Unidades reservables */
 .unidad rect {
@@ -1717,11 +1728,18 @@ a {
   text-anchor: middle;
   font-size: 40px;
 }
-.mapa--isometrico .servicio {
-  fill: rgba(12, 12, 12, 0.12);
-}
 .mapa--isometrico .servicio.cara-sup {
-  fill: rgba(12, 12, 12, 0.07);
+  fill: rgba(12, 12, 12, 0.075);
+}
+.mapa--isometrico .servicio.cara-der {
+  fill: rgba(12, 12, 12, 0.14);
+}
+.mapa--isometrico .servicio.cara-izq {
+  fill: rgba(12, 12, 12, 0.2);
+}
+.mapa--isometrico .servicio-etiqueta {
+  text-anchor: middle;
+  pointer-events: none;
 }
 .mapa--isometrico .servicio-etiqueta {
   font-size: 30px;
@@ -1822,6 +1840,16 @@ a {
 }
 .mapa--isometrico .mat--pantalla.cara-izq {
   fill: #171b20;
+}
+
+.mapa--isometrico .mat--planta.cara-sup {
+  fill: #4f7d5a;
+}
+.mapa--isometrico .mat--planta.cara-der {
+  fill: #3f6549;
+}
+.mapa--isometrico .mat--planta.cara-izq {
+  fill: #325239;
 }
 
 .mapa--isometrico .mat--tabique.cara-sup {

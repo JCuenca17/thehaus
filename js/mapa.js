@@ -5,11 +5,12 @@
  * del estado: hoy lo alimenta un simulador, manana un backend, mediante
  * la misma llamada a aplicarEstados().
  *
- * Dos vistas sobre los mismos datos: "plano" (cenital) e "isometrico".
+ * Dos vistas sobre los mismos datos: "plano" (cenital) e "isometrico",
+ * esta ultima girable en pasos de 90 grados.
  */
 import { LOCAL, ZONAS, SERVICIOS, PUESTOS, ESPACIOS, ESTADOS } from "./planta.js";
-import { crearProyeccion, porProfundidad, ALTURAS } from "./isometrico.js";
-import { amueblar } from "./mobiliario.js";
+import { crearProyeccion, ALTURAS, GIROS } from "./isometrico.js";
+import { amueblar, amueblarServicio } from "./mobiliario.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -25,167 +26,183 @@ const texto = (attrs, contenido) =>
 /** El modelo usa w/h; SVG espera width/height */
 const medidas = ({ x, y, w, h }) => ({ x, y, width: w, height: h });
 
-/**
- * Pinta el plano dentro de un contenedor.
- *
- * @param {HTMLElement} contenedor
- * @param {{vista?: "plano"|"isometrico", interactivo?: boolean,
- *          alSeleccionar?: (unidad) => void}} opciones
- */
+/** Las dos caras laterales se sombrean distinto para dar volumen */
+const SOMBRA = ["cara-der", "cara-izq"];
+
 export function renderizarMapa(contenedor, opciones = {}) {
   const { vista = "isometrico", interactivo = false, alSeleccionar } = opciones;
 
-  const iso = vista === "isometrico" ? crearProyeccion() : null;
-  const marco = iso ? iso.marco(LOCAL, ALTURAS.espacio) : null;
+  let giro = opciones.giro ?? 0;
+  const estados = new Map();
+  let nodos = new Map();
+  let svg = null;
 
-  const svg = crear("svg", {
-    viewBox: marco ? marco.viewBox : `0 0 ${LOCAL.ancho} ${LOCAL.alto}`,
-    class: `mapa mapa--${vista}` + (interactivo ? " mapa--interactivo" : ""),
-    role: "img",
-    "aria-label": "Plano de ocupación de The Haus",
-  });
+  function construir() {
+    const iso = vista === "isometrico" ? crearProyeccion({ local: LOCAL, giro }) : null;
 
-  /* ─── Zonas y servicios (suelo) ─── */
-
-  const capaZonas = crear("g", { class: "mapa-zonas" });
-
-  for (const z of [...ZONAS].sort(porProfundidad)) {
-    if (iso) {
-      // Sin rotulo dentro del plano: en isometrico no queda hueco libre
-      // sin chocar con las unidades. Los nombres van en la lista de
-      // disponibilidad por zona, que ademas es texto real.
-      capaZonas.appendChild(crear("polygon", {
-        points: iso.suelo(z.rect),
-        class: `zona-fondo zona--${z.id}`,
-      }));
-    } else {
-      capaZonas.appendChild(crear("rect", {
-        ...medidas(z.rect), rx: 14, class: `zona-fondo zona--${z.id}`,
-      }));
-      capaZonas.appendChild(
-        texto({ x: z.rect.x + 26, y: z.rect.y + 54, class: "zona-etiqueta" }, z.nombre),
-      );
-    }
-  }
-  svg.appendChild(capaZonas);
-
-  const capaServicios = crear("g", { class: "mapa-servicios" });
-  for (const s of [...SERVICIOS].sort(porProfundidad)) {
-    if (iso) {
-      const p = iso.prisma(s.rect, ALTURAS.servicio);
-      capaServicios.appendChild(crear("polygon", { points: p.izquierda, class: "servicio cara-izq" }));
-      capaServicios.appendChild(crear("polygon", { points: p.derecha, class: "servicio cara-der" }));
-      capaServicios.appendChild(crear("polygon", { points: p.superior, class: "servicio cara-sup" }));
-      const [cx, cy] = iso.centro(s.rect, ALTURAS.servicio);
-      capaServicios.appendChild(texto({ x: cx, y: cy + 8, class: "servicio-etiqueta" }, s.nombre));
-    } else {
-      capaServicios.appendChild(crear("rect", { ...medidas(s.rect), rx: 8, class: "servicio" }));
-      capaServicios.appendChild(texto({
-        x: s.rect.x + s.rect.w / 2,
-        y: s.rect.y + s.rect.h / 2 + 10,
-        class: "servicio-etiqueta",
-      }, s.nombre));
-    }
-  }
-  svg.appendChild(capaServicios);
-
-  /* ─── Unidades reservables ─── */
-
-  const capaUnidades = crear("g", { class: "mapa-unidades" });
-  const nodos = new Map();
-
-  const pintar = (unidad, tipo, indice) => {
-    const g = crear("g", {
-      class: `unidad unidad--${tipo}`,
-      "data-id": unidad.id,
-      "data-estado": "libre",
+    svg = crear("svg", {
+      viewBox: iso ? iso.marco(ALTURAS.espacio).viewBox : `0 0 ${LOCAL.ancho} ${LOCAL.alto}`,
+      class: `mapa mapa--${vista}` + (interactivo ? " mapa--interactivo" : ""),
+      role: "img",
+      "aria-label": "Plano de ocupación de The Haus",
     });
 
-    // Las unidades entran escalonadas siguiendo el orden de profundidad,
-    // asi el plano se "construye" de fondo a frente. El CSS decide si la
-    // animacion llega a ocurrir (prefers-reduced-motion la anula).
-    g.style.setProperty("--orden", indice);
+    const ordenar = (lista) =>
+      iso ? [...lista].sort(iso.porProfundidad) : [...lista];
 
-    if (iso) {
-      const { plataforma, piezas } = amueblar(unidad);
-
-      // Plataforma: la unica pieza que lleva el color de estado. Va con
-      // clase propia para que las reglas de estado no alcancen a los muebles.
-      const base = iso.prisma(plataforma.rect, plataforma.alto);
-      g.appendChild(crear("polygon", { points: base.izquierda, class: "plat cara-izq" }));
-      g.appendChild(crear("polygon", { points: base.derecha, class: "plat cara-der" }));
-      g.appendChild(crear("polygon", { points: base.superior, class: "plat cara-sup" }));
-
-      // Muebles encima, en orden de profundidad para que se tapen bien
-      const mobiliario = crear("g", { class: "mobiliario" });
-      for (const pieza of [...piezas].sort(porProfundidad)) {
-        const c = iso.prisma(pieza.rect, plataforma.alto + pieza.alto);
-        const m = `mat--${pieza.material}`;
-        mobiliario.appendChild(crear("polygon", { points: c.izquierda, class: `pieza cara-izq ${m}` }));
-        mobiliario.appendChild(crear("polygon", { points: c.derecha, class: `pieza cara-der ${m}` }));
-        mobiliario.appendChild(crear("polygon", { points: c.superior, class: `pieza cara-sup ${m}` }));
-      }
-      g.appendChild(mobiliario);
-    } else {
-      g.appendChild(crear("rect", { ...medidas(unidad.rect), rx: tipo === "espacio" ? 12 : 6 }));
-    }
-
-    if (tipo === "espacio" && !iso) {
-      g.appendChild(texto({
-        x: unidad.rect.x + unidad.rect.w / 2,
-        y: unidad.rect.y + unidad.rect.h / 2,
-        class: "unidad-etiqueta",
-      }, unidad.nombre));
-    }
-
-    if (interactivo) {
-      g.setAttribute("tabindex", "0");
-      g.setAttribute("role", "button");
-      // El estado va tambien en el nombre accesible: el color no puede ser
-      // el unico portador de la informacion.
-      g.setAttribute("aria-label", `${unidad.nombre}, libre`);
-    }
-
-    capaUnidades.appendChild(g);
-    nodos.set(unidad.id, { nodo: g, unidad, tipo });
-  };
-
-  // En isometrico el orden de pintado es la profundidad; en plano da igual
-  const unidades = [
-    ...PUESTOS.map((u) => ({ ...u, _tipo: "puesto" })),
-    ...ESPACIOS.map((u) => ({ ...u, _tipo: "espacio" })),
-  ];
-  if (iso) unidades.sort(porProfundidad);
-  unidades.forEach((u, i) => pintar(u, u._tipo, i));
-
-  svg.appendChild(capaUnidades);
-  contenedor.replaceChildren(svg);
-
-  if (interactivo && alSeleccionar) {
-    const activar = (target) => {
-      const g = target.closest(".unidad");
-      if (!g) return;
-      const registro = nodos.get(g.dataset.id);
-      if (registro) alSeleccionar({ ...registro.unidad, estado: g.dataset.estado });
+    /** Extruye una caja como cara superior mas sus laterales visibles */
+    const extruir = (destino, rect, alto, clases) => {
+      const p = iso.prisma(rect, alto);
+      p.laterales.forEach((puntos, i) => {
+        destino.appendChild(
+          crear("polygon", { points: puntos, class: `${clases} ${SOMBRA[i] ?? SOMBRA[1]}` }),
+        );
+      });
+      destino.appendChild(crear("polygon", { points: p.superior, class: `${clases} cara-sup` }));
     };
 
-    svg.addEventListener("click", (e) => activar(e.target));
-    svg.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        activar(e.target);
+    /* ─── Suelos de zona ─── */
+    const capaZonas = crear("g", { class: "mapa-zonas" });
+    for (const z of ordenar(ZONAS)) {
+      if (iso) {
+        capaZonas.appendChild(
+          crear("polygon", { points: iso.suelo(z.rect), class: `zona-fondo zona--${z.id}` }),
+        );
+      } else {
+        capaZonas.appendChild(
+          crear("rect", { ...medidas(z.rect), rx: 14, class: `zona-fondo zona--${z.id}` }),
+        );
+        capaZonas.appendChild(
+          texto({ x: z.rect.x + 26, y: z.rect.y + 54, class: "zona-etiqueta" }, z.nombre),
+        );
       }
+    }
+    svg.appendChild(capaZonas);
+
+    /* ─── Suelos de servicio ─── */
+    const capaSuelos = crear("g", { class: "mapa-servicios" });
+    for (const s2 of ordenar(SERVICIOS)) {
+      if (iso) {
+        capaSuelos.appendChild(
+          crear("polygon", { points: iso.suelo(s2.rect), class: "servicio cara-sup" }),
+        );
+      } else {
+        capaSuelos.appendChild(crear("rect", { ...medidas(s2.rect), rx: 8, class: "servicio" }));
+        capaSuelos.appendChild(
+          texto({
+            x: s2.rect.x + s2.rect.w / 2,
+            y: s2.rect.y + s2.rect.h / 2 + 10,
+            class: "servicio-etiqueta",
+          }, s2.nombre),
+        );
+      }
+    }
+    svg.appendChild(capaSuelos);
+
+    /* ─── Volumenes: unidades y muebles de servicio en una sola pasada ───
+       Ordenar por capas en vez de por profundidad hacia que un mostrador
+       situado delante se dibujase detras de los escritorios. */
+    const capaUnidades = crear("g", { class: "mapa-volumenes" });
+    nodos = new Map();
+
+    const grupoServicio = (s2) => {
+      const g = crear("g", { class: `servicio-grupo servicio--${s2.id}` });
+      for (const pieza of [...amueblarServicio(s2)].sort(iso.porProfundidad)) {
+        extruir(g, pieza.rect, pieza.alto, `pieza mat--${pieza.material}`);
+      }
+      // Flota por encima del mueble mas alto para no quedar enterrado
+      const [ex, ey] = iso.centro(s2.rect, 175);
+      g.appendChild(texto({ x: ex, y: ey, class: "servicio-etiqueta" }, s2.nombre));
+      return g;
+    };
+
+    const pintar = (unidad, tipo, indice) => {
+      const g = crear("g", {
+        class: `unidad unidad--${tipo}`,
+        "data-id": unidad.id,
+        "data-estado": estados.get(unidad.id) ?? "libre",
+      });
+      g.style.setProperty("--orden", indice);
+
+      if (iso) {
+        const { plataforma, piezas } = amueblar(unidad);
+        extruir(g, plataforma.rect, plataforma.alto, "plat");
+
+        const mobiliario = crear("g", { class: "mobiliario" });
+        for (const pieza of [...piezas].sort(iso.porProfundidad)) {
+          extruir(mobiliario, pieza.rect, plataforma.alto + pieza.alto, `pieza mat--${pieza.material}`);
+        }
+        g.appendChild(mobiliario);
+      } else {
+        g.appendChild(crear("rect", { ...medidas(unidad.rect), rx: tipo === "espacio" ? 12 : 6 }));
+        if (tipo === "espacio") {
+          g.appendChild(texto({
+            x: unidad.rect.x + unidad.rect.w / 2,
+            y: unidad.rect.y + unidad.rect.h / 2,
+            class: "unidad-etiqueta",
+          }, unidad.nombre));
+        }
+      }
+
+      if (interactivo) {
+        g.setAttribute("tabindex", "0");
+        g.setAttribute("role", "button");
+        // El estado va tambien en el nombre accesible: el color no puede
+        // ser el unico portador de la informacion.
+        g.setAttribute("aria-label", `${unidad.nombre}, ${g.dataset.estado}`);
+      }
+
+      nodos.set(unidad.id, { nodo: g, unidad, tipo });
+      return g;
+    };
+
+    const volumenes = ordenar([
+      ...PUESTOS.map((u) => ({ ...u, _clase: "puesto" })),
+      ...ESPACIOS.map((u) => ({ ...u, _clase: "espacio" })),
+      ...(iso ? SERVICIOS.map((u) => ({ ...u, _clase: "servicio" })) : []),
+    ]);
+
+    volumenes.forEach((v, i) => {
+      capaUnidades.appendChild(
+        v._clase === "servicio" ? grupoServicio(v) : pintar(v, v._clase, i),
+      );
     });
+
+    svg.appendChild(capaUnidades);
+    contenedor.replaceChildren(svg);
+
+    if (interactivo && alSeleccionar) {
+      const activar = (target) => {
+        const g = target.closest(".unidad");
+        if (!g) return;
+        const registro = nodos.get(g.dataset.id);
+        if (registro) alSeleccionar({ ...registro.unidad, estado: g.dataset.estado });
+      };
+
+      svg.addEventListener("click", (e) => activar(e.target));
+      svg.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          activar(e.target);
+        }
+      });
+    }
   }
 
-  return {
-    svg,
-    /** @param {Record<string,string>} estados mapa de id → estado */
-    aplicarEstados(estados) {
-      for (const [id, estado] of Object.entries(estados)) {
-        const registro = nodos.get(id);
-        if (!registro || !ESTADOS.includes(estado)) continue;
+  construir();
 
+  const api = {
+    get svg() {
+      return svg;
+    },
+    /** @param {Record<string,string>} nuevos mapa de id → estado */
+    aplicarEstados(nuevos) {
+      for (const [id, estado] of Object.entries(nuevos)) {
+        if (!ESTADOS.includes(estado)) continue;
+        estados.set(id, estado);
+
+        const registro = nodos.get(id);
+        if (!registro) continue;
         registro.nodo.dataset.estado = estado;
         if (interactivo) {
           registro.nodo.setAttribute("aria-label", `${registro.unidad.nombre}, ${estado}`);
@@ -200,7 +217,6 @@ export function renderizarMapa(contenedor, opciones = {}) {
       for (const { nodo } of nodos.values()) total[nodo.dataset.estado]++;
       return total;
     },
-    /** Libres y total por zona, para la lista de disponibilidad */
     resumenPorZona() {
       const porZona = new Map(ZONAS.map((z) => [z.id, { ...z, libres: 0, total: 0 }]));
       for (const { nodo, unidad } of nodos.values()) {
@@ -211,7 +227,18 @@ export function renderizarMapa(contenedor, opciones = {}) {
       }
       return [...porZona.values()];
     },
+    /** Gira el plano un cuarto de vuelta y lo vuelve a construir */
+    girar(pasos = 1) {
+      giro = (((giro + pasos) % GIROS) + GIROS) % GIROS;
+      construir();
+      return giro;
+    },
+    get giro() {
+      return giro;
+    },
   };
+
+  return api;
 }
 
 /**
@@ -227,12 +254,12 @@ export function crearSimulador(mapa, opciones = {}) {
   const alAzar = (lista) => lista[Math.floor(Math.random() * lista.length)];
 
   const sembrar = () => {
-    const estados = {};
+    const nuevos = {};
     for (const id of ids) {
       const r = Math.random();
-      estados[id] = r < 0.45 ? "ocupado" : r < 0.62 ? "reservado" : "libre";
+      nuevos[id] = r < 0.45 ? "ocupado" : r < 0.62 ? "reservado" : "libre";
     }
-    mapa.aplicarEstados(estados);
+    mapa.aplicarEstados(nuevos);
   };
 
   const latir = () => {
