@@ -15,7 +15,7 @@
  * Nada de esto cachea reservas: viven en localStorage, no en la red.
  */
 
-const VERSION = "v7";
+const VERSION = "v8";
 const CACHE = `thehaus-app-${VERSION}`;
 
 const RECURSOS = [
@@ -32,7 +32,10 @@ const RECURSOS = [
   "/js/reservas.js",
   "/js/identidad.js",
   "/js/hoja.js",
-  "/js/panzoom.js",
+  "/js/escena3d.js",
+  "/js/muebles3d.js",
+  "/vendor/three.module.min.js",
+  "/vendor/three.core.min.js",
   "/fonts/bdsans-bold.woff2",
   "/fonts/bdsans-regular.woff2",
   "/fonts/inter-latin-var.woff2",

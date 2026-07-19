@@ -55,15 +55,20 @@ function silla(x, y, ancho, fondo, mira = "sur") {
   return [asiento, respaldos[mira]];
 }
 
-/* ─── Escritorio de coworking (130 x 70) ─── */
-function escritorio({ x, y, w, h }) {
+/* ─── Escritorio de coworking (140 x 140) ─── */
+function escritorio({ x, y, w, h }, unidad = {}) {
+  // En un bench los tableros se juntan en el centro de la isla y las sillas
+  // quedan fuera, asi que el puesto se dibuja segun hacia donde mira
+  const alSur = (unidad.mira ?? "norte") === "sur";
+  const mesaY = alSur ? y + h - 76 : y + 6;
+  const sillaY = alSur ? y + 16 : y + h - 52;
+
   // El mueble se mete hacia dentro a proposito: el borde de plataforma que
   // queda libre es lo que deja ver el color de estado desde lejos.
   return [
-    caja(x + 12, y + 10, w - 24, 30, A.mesa, "madera"),
-    caja(x + w / 2 - 14, y + 13, 28, 4, A.mesa + 30, "pantalla"),
-    // La silla queda al sur de la mesa, asi que se sienta mirando al norte
-    ...silla(x + w / 2 - 16, y + h - 24, 32, 16, "norte"),
+    caja(x + 10, mesaY, w - 20, 70, A.mesa, "madera"),
+    caja(x + w / 2 - 26, mesaY + (alSur ? 54 : 8), 52, 6, A.mesa + 34, "pantalla"),
+    ...silla(x + w / 2 - 24, sillaY, 48, 36, alSur ? "sur" : "norte"),
   ];
 }
 

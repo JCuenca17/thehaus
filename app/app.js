@@ -5,9 +5,8 @@
  * datos vive en reservas.js y todos los importes en tarifas.js; aqui solo
  * se coordina.
  */
-import { renderizarMapa } from "../js/mapa.js";
+import { crearEscena } from "../js/escena3d.js";
 import { crearHoja } from "../js/hoja.js";
-import { crearPanZoom } from "../js/panzoom.js";
 import { FRANJAS, franjaPorId, precioDe, formatear, SON_PROVISIONALES } from "../js/tarifas.js";
 import {
   obtenerIdentidad,
@@ -385,16 +384,13 @@ function listaDeReservas() {
 
 /* ─── Arranque ─── */
 
-mapa = renderizarMapa($("capaMapa"), {
-  interactivo: true,
-  alSeleccionar: (unidad) => {
-    // Tras arrastrar el plano no se abre nada: el gesto era mover, no elegir
-    if (panzoom?.fueArrastre()) return;
-    hoja.abrir(fichaDeUnidad(unidad));
-  },
+mapa = crearEscena($("capaMapa"), {
+  alSeleccionar: (unidad) => hoja.abrir(fichaDeUnidad(unidad)),
 });
 
-panzoom = crearPanZoom($("lienzo"), $("capaMapa"));
+// La escena lleva su propia camara: orbitar, acercar y reencuadrar son
+// suyos, asi que hace de panzoom sin que el resto del archivo se entere
+panzoom = mapa;
 
 alPulsar("btnGirar", () => {
   mapa.girar(1);

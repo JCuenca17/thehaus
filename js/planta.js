@@ -61,19 +61,19 @@ export const ZONAS = [
     id: "coworking",
     nombre: "Trabajo compartido",
     unidad: "puesto",
-    rect: { x: 500, y: 720, w: 700, h: 680 },
+    rect: { x: 500, y: 720, w: 760, h: 680 },
   },
   {
     id: "juntas",
     nombre: "Sala de juntas",
     unidad: "espacio",
-    rect: { x: 1260, y: 720, w: 940, h: 320 },
+    rect: { x: 1320, y: 720, w: 880, h: 320 },
   },
   {
     id: "oficinas",
     nombre: "Oficinas privadas",
     unidad: "espacio",
-    rect: { x: 1260, y: 1080, w: 940, h: 320 },
+    rect: { x: 1320, y: 1080, w: 880, h: 320 },
   },
 ];
 
@@ -93,7 +93,7 @@ const OFICINAS = Array.from({ length: 4 }, (_, i) => ({
   zona: "oficinas",
   nombre: `Oficina ${i + 1}`,
   capacidad: 2,
-  rect: { x: 1280 + i * 231, y: 1080 + BANDA, w: 207, h: 220 },
+  rect: { x: 1340 + i * 216, y: 1080 + BANDA, w: 190, h: 220 },
 }));
 
 export const ESPACIOS = [
@@ -110,39 +110,52 @@ export const ESPACIOS = [
     zona: "juntas",
     nombre: "10 plazas",
     capacidad: 10,
-    rect: { x: 1280, y: 720 + BANDA, w: 900, h: 240 },
+    rect: { x: 1340, y: 720 + BANDA, w: 840, h: 240 },
   },
 ];
 
 /* ─── Puestos individuales ─── */
 
-const ESCRITORIO = { w: 120, h: 66 };
-const ISLA = { w: 2 * ESCRITORIO.w + 8, h: 2 * ESCRITORIO.h + 6 };
+/**
+ * Un puesto no es solo la mesa: son 70 cm de tablero mas el sitio donde va
+ * la silla y por donde se entra. De ahi los 140 de fondo. Con la medida
+ * esquematica anterior (66) las sillas se montaban sobre las mesas en
+ * cuanto se dibujaron en volumen.
+ */
+const ESCRITORIO = { w: 140, h: 140 };
+const ISLA = { w: 2 * ESCRITORIO.w, h: 2 * ESCRITORIO.h };
 
 /**
- * Seis islas de cuatro escritorios, en dos columnas por tres filas.
- * Cuatro por isla y no seis: con 700 cm de fondo, islas mayores dejarian
- * un pasillo central por el que no se pasa.
+ * Cuatro islas de cuatro puestos, en dos columnas por dos filas.
+ *
+ * Dentro de cada isla los tableros se juntan en el centro y las sillas
+ * quedan fuera, que es como se monta el bench: por eso la fila de arriba
+ * mira al sur y la de abajo al norte.
+ *
+ * Diecisies puestos y no veinticuatro: es lo que cabe con mesas de verdad
+ * y pasillos por los que se pueda pasar.
  */
 function generarEscritorios() {
   const puestos = [];
   const origen = { x: 520, y: 800 };
-  const paso = { x: ISLA.w + 164, y: ISLA.h + 83 };
+  const paso = { x: ISLA.w + 160, y: ISLA.h + 20 };
 
   let n = 0;
-  for (let isla = 0; isla < 6; isla++) {
+  for (let isla = 0; isla < 4; isla++) {
     const baseX = origen.x + (isla % 2) * paso.x;
     const baseY = origen.y + Math.floor(isla / 2) * paso.y;
 
     for (let i = 0; i < 4; i++) {
       n++;
+      const fila = Math.floor(i / 2);
       puestos.push({
         id: `ws-${String(n).padStart(2, "0")}`,
         zona: "coworking",
         nombre: `Escritorio ${n}`,
+        mira: fila === 0 ? "sur" : "norte",
         rect: {
-          x: baseX + (i % 2) * (ESCRITORIO.w + 8),
-          y: baseY + Math.floor(i / 2) * (ESCRITORIO.h + 6),
+          x: baseX + (i % 2) * ESCRITORIO.w,
+          y: baseY + fila * ESCRITORIO.h,
           w: ESCRITORIO.w,
           h: ESCRITORIO.h,
         },

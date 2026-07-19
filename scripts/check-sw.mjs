@@ -23,6 +23,8 @@ async function main() {
   // Todo lo que el navegador necesita para arrancar sin red
   const necesarios = [
     ...(await readdir("js")).filter((f) => f.endsWith(".js")).map((f) => `/js/${f}`),
+    // three.js va autoalojado: si falta en la precarga, /app no abre sin red
+    ...(await readdir("vendor")).filter((f) => f.endsWith(".js")).map((f) => `/vendor/${f}`),
     ...(await readdir("app"))
       .filter((f) => /\.(js|css)$/.test(f) && f !== "sw.js")
       .map((f) => `/app/${f}`),
@@ -33,7 +35,7 @@ async function main() {
 
   const faltan = necesarios.filter((r) => !declarados.has(r));
   const sobran = [...declarados].filter(
-    (r) => /^\/(js|app)\/.+\.(js|css)$/.test(r) && !necesarios.includes(r),
+    (r) => /^\/(js|app|vendor)\/.+\.(js|css)$/.test(r) && !necesarios.includes(r),
   );
 
   for (const f of faltan) console.error(`  FALTA en RECURSOS: ${f}`);
