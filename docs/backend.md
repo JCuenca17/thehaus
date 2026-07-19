@@ -116,7 +116,7 @@ exclusion sobre rangos horarios— **nunca solo en el cliente**.
 
 | Modulo                     | Cambio                                                    |
 | -------------------------- | --------------------------------------------------------- |
-| `js/identidad.js`          | **Se sustituye entero** por sesion real de Supabase        |
+| `js/sesion-simulada.js`    | **Se borra entero**; lo reemplaza la sesion de Supabase     |
 | `js/reservas.js`           | Por dentro pasa a la API; se mantiene la firma publica     |
 | `js/tarifas.js`            | Los precios vienen de la base de datos                     |
 | `js/planta.js`             | Sin cambios                                                |

@@ -9,12 +9,16 @@ import { crearEscena } from "../js/escena3d.js";
 import { crearHoja } from "../js/hoja.js";
 import { FRANJAS, franjaPorId, precioDe, formatear, SON_PROVISIONALES } from "../js/tarifas.js";
 import {
-  obtenerIdentidad,
-  guardarIdentidad,
-  olvidarIdentidad,
-  nombreValido,
-  contactoValido,
-} from "../js/identidad.js";
+  obtenerSesion,
+  haySesion,
+  hayCuenta,
+  cuentaGuardada,
+  registrar,
+  iniciarSesion,
+  cerrarSesion,
+  olvidarCuenta,
+  MOTIVOS,
+} from "../js/sesion-simulada.js";
 import {
   estadosDe,
   crearReserva,
@@ -23,6 +27,7 @@ import {
   reservasDe,
   hoy,
   proximosDias,
+  descartarReservasSinCuenta,
 } from "../js/reservas.js";
 
 const $ = (id) => document.getElementById(id);
@@ -209,14 +214,16 @@ function fichaDeUnidad(unidad) {
     <svg class="ico ico-xs" aria-hidden="true"><use href="#i-arrow-right" /></svg>`;
 
   btn.addEventListener("click", () => {
-    // Sin identidad no se reserva: primero se piden los datos y despues
-    // se vuelve a esta misma ficha, para no perder la seleccion
-    if (!obtenerIdentidad()) {
-      hoja.abrir(formularioIdentidad(() => hoja.abrir(fichaDeUnidad(unidad))));
+    // A esta ficha no se llega sin sesion: la puerta cubre la aplicacion
+    // entera. Aun asi se comprueba, porque la sesion puede haberse cerrado
+    // en otra pestana mientras esta ficha estaba abierta.
+    const cuenta = obtenerSesion();
+    if (!cuenta) {
+      hoja.cerrar();
+      mostrarPuerta();
       return;
     }
 
-    const identidad = obtenerIdentidad();
     const res = crearReserva({
       unidadId: unidad.id,
       nombre: unidad.nombre,
@@ -224,8 +231,8 @@ function fichaDeUnidad(unidad) {
       fecha: estado.fecha,
       franja: estado.franja,
       importe,
-      titular: identidad.nombre,
-      contacto: identidad.contacto,
+      titular: cuenta.nombre,
+      contacto: cuenta.contacto,
     });
 
     hoja.cerrar();
@@ -253,69 +260,93 @@ function fichaDeUnidad(unidad) {
   return frag;
 }
 
-/**
- * Pide nombre y contacto antes de dejar reservar. No es autenticacion:
- * solo evita que las reservas queden a nombre de nadie.
- */
-function formularioIdentidad(alTerminar) {
-  const frag = document.createDocumentFragment();
+/* ─── Puerta de sesion ─── */
 
-  const titulo = document.createElement("h2");
+/**
+ * Para entrar hace falta cuenta. No es autenticacion —lo dice el propio
+ * modulo de sesion— pero el flujo es el que habra cuando lo sea, que es
+ * justo lo que se quiere ensayar.
+ */
+function pintarPuerta(modo = hayCuenta() ? "entrar" : "registro") {
+  const cuerpo = $("puertaCuerpo");
+  const entrando = modo === "entrar";
+  const cuenta = cuentaGuardada();
+
+  const titulo = document.createElement("h1");
   titulo.className = "hoja-titulo";
-  titulo.textContent = "¿Quién reserva?";
-  frag.appendChild(titulo);
+  titulo.id = "puertaTitulo";
+  titulo.textContent = entrando ? "Bienvenido de nuevo" : "Crea tu cuenta";
 
   const meta = document.createElement("p");
   meta.className = "hoja-meta";
-  meta.textContent = "Necesitamos tus datos para poder confirmarte la reserva.";
-  frag.appendChild(meta);
+  meta.textContent = entrando
+    ? "Entra para ver el plano y reservar tu sitio."
+    : "Para reservar necesitamos saber a quién avisar.";
 
   const form = document.createElement("form");
   form.className = "form-identidad";
   form.noValidate = true;
-  form.innerHTML = `
-    <label>
-      <span>Nombre y apellido</span>
-      <input name="nombre" type="text" autocomplete="name" required />
-    </label>
-    <label>
+  form.innerHTML =
+    (entrando
+      ? ""
+      : `<label>
+          <span>Nombre y apellido</span>
+          <input name="nombre" type="text" autocomplete="name" required />
+        </label>`) +
+    `<label>
       <span>Correo o teléfono</span>
-      <input name="contacto" type="text" autocomplete="email" required />
+      <input name="contacto" type="text" autocomplete="email" required
+        value="${entrando && cuenta ? cuenta.contacto : ""}" />
     </label>
     <p class="form-error" hidden></p>
-    <button type="submit" class="btn btn-dark hoja-accion">Continuar</button>
-  `;
+    <button type="submit" class="btn btn-dark hoja-accion">
+      ${entrando ? "Entrar" : "Crear cuenta y entrar"}
+    </button>`;
 
   const error = form.querySelector(".form-error");
+  const fallar = (motivo, campo) => {
+    error.textContent = MOTIVOS[motivo] ?? "No se ha podido completar.";
+    error.hidden = false;
+    form[campo]?.focus();
+  };
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const nombre = form.nombre.value;
-    const contacto = form.contacto.value;
+    const datos = { contacto: form.contacto.value };
+    if (!entrando) datos.nombre = form.nombre.value;
 
-    if (!nombreValido(nombre)) {
-      error.textContent = "Escribe tu nombre completo.";
-      error.hidden = false;
-      form.nombre.focus();
+    const res = entrando ? iniciarSesion(datos) : registrar(datos);
+    if (!res.ok) {
+      fallar(res.motivo, res.motivo === "nombre" ? "nombre" : "contacto");
       return;
     }
-    if (!contactoValido(contacto)) {
-      error.textContent = "Escribe un correo o un teléfono válido.";
-      error.hidden = false;
-      form.contacto.focus();
-      return;
-    }
-
-    if (!guardarIdentidad({ nombre, contacto })) {
-      error.textContent = "No se pudieron guardar tus datos en este navegador.";
-      error.hidden = false;
-      return;
-    }
-    alTerminar();
+    entrar();
   });
 
-  frag.appendChild(form);
-  return frag;
+  // Cambiar de camino: sin servidor solo cabe una cuenta por navegador, asi
+  // que "usar otra" es literalmente olvidar la que hay
+  const alterna = document.createElement("button");
+  alterna.type = "button";
+  alterna.className = "enlace-sutil puerta-alterna";
+  alterna.textContent = entrando ? "Usar otra cuenta" : "Ya tengo cuenta";
+  alterna.addEventListener("click", () => {
+    if (entrando) olvidarCuenta();
+    pintarPuerta(entrando ? "registro" : "entrar");
+  });
+
+  const nota = document.createElement("p");
+  nota.className = "puerta-nota";
+  nota.textContent =
+    "No pedimos contraseña: esto es una demostración y no queremos que escribas una real.";
+
+  cuerpo.replaceChildren(titulo, meta, form, alterna, nota);
+  form.querySelector("input")?.focus();
+}
+
+function mostrarPuerta() {
+  $("puerta").hidden = false;
+  document.body.classList.add("con-puerta");
+  pintarPuerta();
 }
 
 function listaDeReservas() {
@@ -326,16 +357,17 @@ function listaDeReservas() {
   titulo.textContent = "Mis reservas";
   frag.appendChild(titulo);
 
-  const identidad = obtenerIdentidad();
-  if (identidad) {
+  const cuenta = obtenerSesion();
+  if (cuenta) {
     const quien = document.createElement("p");
     quien.className = "hoja-meta identidad-actual";
     quien.innerHTML =
-      `A nombre de <strong>${identidad.nombre}</strong> · ${identidad.contacto} ` +
-      `<button type="button" class="enlace-sutil">Cambiar</button>`;
+      `A nombre de <strong>${cuenta.nombre}</strong> · ${cuenta.contacto} ` +
+      `<button type="button" class="enlace-sutil">Cerrar sesión</button>`;
     quien.querySelector("button").addEventListener("click", () => {
-      olvidarIdentidad();
-      hoja.abrir(formularioIdentidad(() => hoja.abrir(listaDeReservas())));
+      cerrarSesion();
+      hoja.cerrar();
+      mostrarPuerta();
     });
     frag.appendChild(quien);
   }
@@ -384,47 +416,79 @@ function listaDeReservas() {
 
 /* ─── Arranque ─── */
 
-mapa = crearEscena($("capaMapa"), {
-  alSeleccionar: (unidad) => hoja.abrir(fichaDeUnidad(unidad)),
-});
+/* La escena se monta la primera vez que se entra, no al cargar la pagina.
+   Encuadrar la camara requiere medir el contenedor, y con la puerta encima
+   se estaba midiendo algo que el usuario todavia no ve; montarla al entrar
+   evita esa clase de encuadres torcidos. */
+let montada = false;
 
-// La escena lleva su propia camara: orbitar, acercar y reencuadrar son
-// suyos, asi que hace de panzoom sin que el resto del archivo se entere
-panzoom = mapa;
+function entrar() {
+  $("puerta").hidden = true;
+  document.body.classList.remove("con-puerta");
 
-alPulsar("btnGirar", () => {
-  mapa.girar(1);
-  // girar() reconstruye el SVG desde cero, asi que hay que repintar estado
-  refrescar();
-  // Antes se reencuadraba aqui, lo que tiraba el zoom del usuario en cada
-  // giro. Ya no hace falta: el encuadre es el mismo en las cuatro
-  // orientaciones, asi que el plano no se descoloca al girar.
-});
+  if (!montada) {
+    montada = true;
+    mapa = crearEscena($("capaMapa"), {
+      alSeleccionar: (unidad) => hoja.abrir(fichaDeUnidad(unidad)),
+    });
+    // La escena lleva su propia camara: orbitar, acercar y reencuadrar son
+    // suyos, asi que hace de panzoom sin que el resto del archivo se entere
+    panzoom = mapa;
+    conectarControles();
+    pintarFiltros();
 
-alPulsar("btnAcercar", () => panzoom.acercar());
-alPulsar("btnAlejar", () => panzoom.alejar());
-/* El icono de expandir promete pantalla completa, asi que hace eso.
-   Reencuadrar pasa a estar en el doble clic sobre el plano, que es donde
-   se busca por instinto. */
-const btnPantalla = alPulsar("btnPantalla", async () => {
-  try {
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else await document.documentElement.requestFullscreen();
-  } catch {
-    avisar("Tu navegador no permite pantalla completa aquí");
+    const descartadas = descartarReservasSinCuenta();
+    if (descartadas) {
+      avisar(
+        descartadas === 1
+          ? "Se descartó 1 reserva anterior a las cuentas"
+          : `Se descartaron ${descartadas} reservas anteriores a las cuentas`,
+      );
+    }
   }
-});
 
-document.addEventListener("fullscreenchange", () => {
-  btnPantalla?.setAttribute("aria-pressed", String(!!document.fullscreenElement));
-  panzoom.reiniciar();
-});
+  refrescar();
+}
 
-$("lienzo")?.addEventListener("dblclick", () => panzoom.reiniciar());
-alPulsar("btnReservas", () => hoja.abrir(listaDeReservas()));
+/* Los controles se enganchan una sola vez, al montar la escena: antes de
+   eso no hay nada que girar ni que acercar. */
+function conectarControles() {
+  alPulsar("btnGirar", () => {
+    mapa.girar(1);
+    // girar() repinta la escena, asi que hay que devolverle el estado
+    refrescar();
+    // Antes se reencuadraba aqui, lo que tiraba el zoom del usuario en cada
+    // giro. Ya no hace falta: el encuadre es el mismo en las cuatro
+    // orientaciones, asi que el plano no se descoloca al girar.
+  });
 
-pintarFiltros();
-refrescar();
+  alPulsar("btnAcercar", () => panzoom.acercar());
+  alPulsar("btnAlejar", () => panzoom.alejar());
+  /* El icono de expandir promete pantalla completa, asi que hace eso.
+     Reencuadrar pasa a estar en el doble clic sobre el plano, que es donde
+     se busca por instinto. */
+  const btnPantalla = alPulsar("btnPantalla", async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch {
+      avisar("Tu navegador no permite pantalla completa aquí");
+    }
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    btnPantalla?.setAttribute("aria-pressed", String(!!document.fullscreenElement));
+    panzoom.reiniciar();
+  });
+
+  $("lienzo")?.addEventListener("dblclick", () => panzoom.reiniciar());
+  alPulsar("btnReservas", () => hoja.abrir(listaDeReservas()));
+}
+
+/* Con sesion se entra directo; sin ella la puerta se queda donde estaba,
+   que es visible desde que llega el HTML. */
+if (haySesion()) entrar();
+else mostrarPuerta();
 
 /* ─── Instalable ─── */
 /* El registro va al final y sin bloquear: si falla, la aplicacion sigue

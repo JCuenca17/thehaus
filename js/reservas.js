@@ -11,8 +11,32 @@
  */
 import { PUESTOS, ESPACIOS } from "./planta.js";
 
-const CLAVE = "thehaus.reservas.v1";
+const CLAVE = "thehaus.reservas.v2";
 const IDS = [...PUESTOS, ...ESPACIOS].map((u) => u.id);
+
+/**
+ * Las reservas de antes de que existieran las cuentas no tienen dueno.
+ * Se descartan en vez de atribuirselas a la primera cuenta que se cree:
+ * eso haria que alguien abriera la aplicacion y heredase reservas que no
+ * hizo, e inventar propiedad sobre unos datos es peor que perder datos de
+ * demostracion.
+ *
+ * Devuelve cuantas se descartaron, para poder avisar una sola vez. Se
+ * llama al arrancar; a partir de la segunda vez no hay nada que borrar y
+ * devuelve 0.
+ */
+export function descartarReservasSinCuenta() {
+  const CLAVE_VIEJA = "thehaus.reservas.v1";
+  try {
+    const viejas = JSON.parse(localStorage.getItem(CLAVE_VIEJA));
+    if (!Array.isArray(viejas)) return 0;
+    localStorage.removeItem(CLAVE_VIEJA);
+    localStorage.removeItem("thehaus.identidad.v1"); // la reemplaza la cuenta
+    return viejas.length;
+  } catch {
+    return 0;
+  }
+}
 
 /* ─── Generador pseudoaleatorio con semilla (mulberry32) ─── */
 

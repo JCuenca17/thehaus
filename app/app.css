@@ -477,6 +477,77 @@
   text-decoration: underline;
 }
 
+/* ─── Aviso permanente de demostración ─── */
+.app-demo {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 8px;
+  padding: 7px var(--pad-x);
+  background: var(--dorado);
+  color: var(--negro);
+  font-size: 12.5px;
+  text-align: center;
+}
+.app-demo strong {
+  font-weight: 700;
+}
+.app-demo span {
+  opacity: 0.75;
+}
+
+/* ─── Puerta de sesión ─── */
+.puerta {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--negro);
+  overflow-y: auto;
+}
+/* Sin esto el display: grid gana al atributo y la puerta no se cierra */
+.puerta[hidden] {
+  display: none;
+}
+.puerta-panel {
+  width: min(100%, 420px);
+  padding: clamp(24px, 5vw, 34px);
+  border-radius: 22px;
+  background: var(--blanco);
+  box-shadow: var(--sombra-lg);
+}
+.puerta-demo {
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--dorado);
+  color: var(--negro);
+  font-size: 12.5px;
+  text-align: center;
+}
+.puerta .hoja-titulo {
+  font-size: 25px;
+}
+.puerta .form-identidad {
+  margin-top: 18px;
+}
+.puerta-alterna {
+  display: block;
+  margin: 16px auto 0;
+}
+.puerta-nota {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: var(--borde);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--negro-60);
+}
+
 /* En pantalla completa el lienzo se queda con todo el alto disponible */
 :fullscreen .app-body,
 .app-body:fullscreen {

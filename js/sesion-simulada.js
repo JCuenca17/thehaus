@@ -11,6 +11,14 @@
  * buscando codigo falso repartido por ahi. Quien lo sustituya solo tiene
  * que ofrecer las mismas funciones.
  *
+ * ─── Cuenta y sesion son dos cosas ───
+ *
+ * La cuenta son los datos de la persona; la sesion es que ahora mismo esta
+ * dentro. Se guardan por separado porque salir no es darse de baja: si
+ * cerrar la sesion borrase la cuenta, "Entrar" no podria funcionar nunca y
+ * la puerta solo sabria registrar. Distinguirlas cuesta una clave mas y
+ * hace que el ensayo se parezca a lo que habra despues.
+ *
  * ─── Por que no pide contrasena ───
  *
  * Esto se despliega en una URL publica. Un campo de contrasena ensena a la
@@ -23,36 +31,63 @@
  * pagos-simulados.js y tampoco toca datos reales.
  */
 
-const CLAVE = "thehaus.sesion.demo.v1";
+const CLAVE_CUENTA = "thehaus.cuenta.demo.v1";
+const CLAVE_SESION = "thehaus.sesion.demo.v1";
 
 /** Se avisa a la interfaz en vez de que ande consultando si hay sesion */
 const oyentes = new Set();
 
-function leer() {
+function leerJSON(clave) {
   try {
-    const guardada = JSON.parse(localStorage.getItem(CLAVE));
-    return guardada?.nombre ? guardada : null;
+    return JSON.parse(localStorage.getItem(clave));
   } catch {
-    // Almacenamiento corrupto o bloqueado: se opera sin sesion
+    // Almacenamiento corrupto o bloqueado: se opera como si no hubiera nada
     return null;
   }
 }
 
-function escribir(sesion) {
+function escribirJSON(clave, valor) {
   try {
-    if (sesion) localStorage.setItem(CLAVE, JSON.stringify(sesion));
-    else localStorage.removeItem(CLAVE);
+    if (valor) localStorage.setItem(clave, JSON.stringify(valor));
+    else localStorage.removeItem(clave);
+    return true;
   } catch {
-    // Modo privado o almacenamiento lleno: la sesion durara lo que la pagina
+    // Modo privado o almacenamiento lleno: durara lo que dure la pagina
+    return false;
   }
+}
+
+function avisar() {
+  const sesion = obtenerSesion();
   for (const oyente of oyentes) oyente(sesion);
   return sesion;
 }
 
-/* ─── API ─── */
+/* ─── Lectura ─── */
 
-export const obtenerSesion = () => leer();
-export const haySesion = () => leer() !== null;
+/** Los datos de la cuenta, haya sesion abierta o no */
+export function cuentaGuardada() {
+  const c = leerJSON(CLAVE_CUENTA);
+  return c?.nombre ? c : null;
+}
+
+export const hayCuenta = () => cuentaGuardada() !== null;
+
+/** La cuenta solo si ademas hay sesion abierta; si no, null */
+export function obtenerSesion() {
+  const cuenta = cuentaGuardada();
+  if (!cuenta) return null;
+  return leerJSON(CLAVE_SESION)?.cuentaId === cuenta.id ? cuenta : null;
+}
+
+export const haySesion = () => obtenerSesion() !== null;
+
+/* ─── Escritura ─── */
+
+function abrirSesion(cuenta) {
+  escribirJSON(CLAVE_SESION, { cuentaId: cuenta.id, desde: new Date().toISOString() });
+  return avisar();
+}
 
 /**
  * Alta de cuenta. Devuelve {ok, sesion} o {ok: false, motivo}, la misma
@@ -62,34 +97,44 @@ export function registrar({ nombre, contacto }) {
   if (!nombreValido(nombre)) return { ok: false, motivo: "nombre" };
   if (!contactoValido(contacto)) return { ok: false, motivo: "contacto" };
 
-  return {
-    ok: true,
-    sesion: escribir({
-      // El id imita al uuid que devolvera Supabase, para que nada dependa
-      // de su formato mas adelante
-      id: `demo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      nombre: nombre.trim(),
-      contacto: contacto.trim(),
-      desde: new Date().toISOString(),
-      simulada: true,
-    }),
+  const cuenta = {
+    // El id imita al uuid que devolvera Supabase, para que nada dependa
+    // de su formato mas adelante
+    id: `demo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    nombre: nombre.trim(),
+    contacto: contacto.trim(),
+    desde: new Date().toISOString(),
+    simulada: true,
   };
+
+  if (!escribirJSON(CLAVE_CUENTA, cuenta)) return { ok: false, motivo: "almacenamiento" };
+  return { ok: true, sesion: abrirSesion(cuenta) };
 }
 
 /**
  * "Entrar" con una cuenta ya creada en este navegador. Sin servidor no hay
- * censo de usuarios: si los datos guardados no coinciden, se rechaza, y si
- * no hay ninguno se manda a registrarse. Es teatro, pero es el mismo teatro
- * que vera el usuario cuando sea de verdad.
+ * censo de usuarios: se compara con la unica cuenta guardada aqui. Es
+ * teatro, pero es el mismo teatro que vera el usuario cuando sea de verdad.
  */
 export function iniciarSesion({ contacto }) {
-  const guardada = leer();
-  if (!guardada) return { ok: false, motivo: "sin-cuenta" };
-  if (guardada.contacto !== contacto.trim()) return { ok: false, motivo: "no-coincide" };
-  return { ok: true, sesion: guardada };
+  const cuenta = cuentaGuardada();
+  if (!cuenta) return { ok: false, motivo: "sin-cuenta" };
+  if (cuenta.contacto !== (contacto ?? "").trim()) return { ok: false, motivo: "no-coincide" };
+  return { ok: true, sesion: abrirSesion(cuenta) };
 }
 
-export const cerrarSesion = () => escribir(null);
+/** Salir conserva la cuenta: salir no es darse de baja */
+export function cerrarSesion() {
+  escribirJSON(CLAVE_SESION, null);
+  return avisar();
+}
+
+/** Darse de baja de verdad: se va la cuenta y con ella la sesion */
+export function olvidarCuenta() {
+  escribirJSON(CLAVE_SESION, null);
+  escribirJSON(CLAVE_CUENTA, null);
+  return avisar();
+}
 
 /** Avisa de cada alta, entrada o salida. Devuelve como dejar de escuchar. */
 export function alCambiar(oyente) {
@@ -111,6 +156,7 @@ export function contactoValido(valor) {
 export const MOTIVOS = {
   nombre: "Escribe tu nombre completo.",
   contacto: "Necesitamos un correo o un teléfono para avisarte.",
+  almacenamiento: "Este navegador no deja guardar datos. Prueba sin modo privado.",
   "sin-cuenta": "Todavía no hay ninguna cuenta en este navegador.",
   "no-coincide": "Esos datos no coinciden con la cuenta guardada.",
 };

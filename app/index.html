@@ -56,6 +56,13 @@
       </button>
     </header>
 
+    <!-- Permanente y no descartable: quien llegue por un enlace tiene que
+         poder saber en todo momento que nada de esto es real -->
+    <p class="app-demo" role="note">
+      <strong>Modo demostración</strong>
+      <span>Ninguna reserva ni pago es real</span>
+    </p>
+
     <div class="app-filtros">
       <div class="filtro-dias" id="filtroDias" role="tablist" aria-label="Elegir día"></div>
       <div class="filtro-franjas" id="filtroFranjas" role="tablist" aria-label="Elegir franja"></div>
@@ -96,6 +103,23 @@
     </div>
 
     <div class="app-aviso" id="aviso" role="status" aria-live="polite"></div>
+
+    <!-- Puerta de sesion. Empieza visible y sin JS se queda visible: mas
+         vale una puerta que no se abre que una aplicacion abierta de par
+         en par si el modulo no carga. -->
+    <div class="puerta" id="puerta" role="dialog" aria-modal="true" aria-labelledby="puertaTitulo">
+      <div class="puerta-panel">
+        <p class="puerta-demo">
+          <strong>Modo demostración</strong> · ninguna reserva ni pago es real
+        </p>
+        <div id="puertaCuerpo">
+          <h1 class="hoja-titulo" id="puertaTitulo">Cargando…</h1>
+          <p class="hoja-meta">
+            Si esto no avanza, tu navegador no ha podido cargar la aplicación.
+          </p>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="app.js"></script>
   </body>
