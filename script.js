@@ -194,10 +194,34 @@ if (mapaTeaser) {
     );
   };
 
-  const montar = async () => {
-    const { renderizarMapa, crearSimulador } = await import("./js/mapa.js");
+  /* Sin WebGL no hay escena 3D: moviles viejos, navegadores con la
+     aceleracion desactivada o maquinas en modo seguro. Se comprueba antes
+     de descargar three.js para no gastar 180 KB en balde. */
+  const hayWebGL = () => {
+    try {
+      const prueba = document.createElement("canvas");
+      return !!(prueba.getContext("webgl2") || prueba.getContext("webgl"));
+    } catch {
+      return false;
+    }
+  };
 
-    const mapa = renderizarMapa(mapaTeaser, { interactivo: false });
+  const montar = async () => {
+    const { crearSimulador } = await import("./js/mapa.js");
+
+    /* El teaser usa la misma escena que /app. Se carga solo al llegar a
+       esta seccion, que esta muy por debajo del pliegue, asi que no toca
+       el LCP; quien no baja hasta aqui no descarga three.js. */
+    let mapa;
+    if (hayWebGL()) {
+      const { crearEscena } = await import("./js/escena3d.js");
+      mapaTeaser.replaceChildren(); // fuera el "Cargando plano…"
+      // Sin alSeleccionar: desde la landing se mira, no se reserva
+      mapa = crearEscena(mapaTeaser, {});
+    } else {
+      const { renderizarMapa } = await import("./js/mapa.js");
+      mapa = renderizarMapa(mapaTeaser, { interactivo: false });
+    }
     simulador = crearSimulador(mapa, { intervalo: 2600, ritmo: 2 });
 
     if (quietud.matches) {

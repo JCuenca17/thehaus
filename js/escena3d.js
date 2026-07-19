@@ -432,8 +432,16 @@ export function crearEscena(contenedor, opciones = {}) {
 
   const punteros = new Map();
   let arrastrando = false;
-  let movimiento = 0;
+  let origen = null;
+  let movimiento = 0; // distancia neta al punto donde se pulso, en px
   let distanciaPrevia = null;
+
+  /* Por debajo de esto el gesto es un clic, no una orbita. Se mide la
+     distancia al punto de partida y no la longitud del recorrido: un clic
+     con el pulso poco firme acumula varios pixeles de ida y vuelta sin
+     moverse del sitio, y contandolos se descartaba como arrastre. */
+  const ZONA_MUERTA = 4;
+  const UMBRAL_ARRASTRE = 7;
 
   const lienzo = renderer.domElement;
   lienzo.style.touchAction = "none";
@@ -443,6 +451,7 @@ export function crearEscena(contenedor, opciones = {}) {
     if (punteros.size === 1) {
       arrastrando = true;
       movimiento = 0;
+      origen = { x: e.clientX, y: e.clientY };
       lienzo.setPointerCapture(e.pointerId);
     }
   });
@@ -465,11 +474,12 @@ export function crearEscena(contenedor, opciones = {}) {
     }
     if (!arrastrando) return;
 
-    const dx = e.clientX - previo.x;
-    const dy = e.clientY - previo.y;
-    movimiento += Math.abs(dx) + Math.abs(dy);
-    theta -= dx * 0.006;
-    phi -= dy * 0.005;
+    movimiento = origen ? Math.hypot(e.clientX - origen.x, e.clientY - origen.y) : 0;
+    // Sin zona muerta, el temblor de un clic ya movia la camara
+    if (movimiento < ZONA_MUERTA) return;
+
+    theta -= (e.clientX - previo.x) * 0.006;
+    phi -= (e.clientY - previo.y) * 0.005;
     objetivo = theta;
     camaraDelUsuario = true;
     pintar();
@@ -493,7 +503,7 @@ export function crearEscena(contenedor, opciones = {}) {
   const punto = new THREE.Vector2();
 
   lienzo.addEventListener("click", (e) => {
-    if (movimiento > 6) return; // era un arrastre, no una eleccion
+    if (movimiento > UMBRAL_ARRASTRE) return; // era una orbita, no una eleccion
     const caja = lienzo.getBoundingClientRect();
     punto.x = ((e.clientX - caja.left) / caja.width) * 2 - 1;
     punto.y = -((e.clientY - caja.top) / caja.height) * 2 + 1;
@@ -582,7 +592,7 @@ export function crearEscena(contenedor, opciones = {}) {
       pintar();
     },
     /** El arrastre orbita la camara; nunca es una seleccion */
-    fueArrastre: () => movimiento > 6,
+    fueArrastre: () => movimiento > UMBRAL_ARRASTRE,
     listaUnidades: () => [...unidades.values()].map(({ unidad }) => unidad),
     /* Coste real del ultimo fotograma. Esta escena vive o muere por el
        numero de llamadas de dibujo, asi que conviene poder medirlo en el

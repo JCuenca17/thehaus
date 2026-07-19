@@ -1653,16 +1653,23 @@ a {
 }
 
 .mapa-lienzo {
+  position: relative;
   background: var(--blanco);
   border: var(--borde);
   border-radius: var(--radius-lg);
   padding: clamp(14px, 2.5vw, 28px);
   box-shadow: var(--sombra);
+  overflow: hidden;
 
-  /* El navegador se salta el layout de este subarbol mientras no se ve.
-     La altura reservada evita que aparecer provoque salto de maquetacion. */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 620px;
+  /* Altura definida, no minima: el canvas se dimensiona al 100% de esta
+     caja, y si la caja creciera con su contenido se realimentarian el uno
+     al otro hasta dejar el lienzo con miles de pixeles de alto. */
+  height: clamp(320px, 40vw, 540px);
+}
+.mapa-lienzo canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* Misma proporcion que el plano, para que sustituirlo por el SVG no
@@ -1789,37 +1796,93 @@ a {
   }
 }
 
+/* Fuera de vista pero no fuera del arbol: sigue siendo enfocable con el
+   tabulador y legible por un lector de pantalla. Con display:none o
+   visibility:hidden dejaria de existir para ambos. */
+.solo-asistencia {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  list-style: none;
+}
+/* Al llegar con el teclado se muestra: navegar a ciegas por un control
+   invisible que si tiene foco es peor que no tenerlo */
+.solo-asistencia button:focus-visible {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 200;
+  width: auto;
+  height: auto;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--negro);
+  color: var(--blanco);
+  font-family: var(--body);
+  font-size: 14px;
+  clip-path: none;
+}
+
 /* Disponibilidad por zona: sustituye a los rotulos dentro del plano, que
    en isometrico no tienen hueco limpio, y ademas es texto real */
+/* Cinco zonas en columnas iguales. Con auto-fit el navegador metia las que
+   cupieran y dejaba una huerfana en la fila siguiente, y los nombres largos
+   partian en dos lineas descuadrando la altura. */
 .mapa-zonas-lista {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   margin-top: 22px;
   text-align: left;
 }
 .mapa-zonas-lista li {
+  /* En columna y no enfrentados: asi el nombre puede ocupar dos lineas sin
+     descolocar la cifra, y todas las tarjetas miden lo mismo */
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  padding: 13px 16px;
+  gap: 10px;
+  min-height: 92px;
+  padding: 14px 16px;
   background: var(--blanco);
   border: var(--borde);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 13px;
 }
 .zona-nombre {
   font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
 }
 .zona-cifra {
   color: var(--negro-60);
   white-space: nowrap;
 }
 .zona-cifra strong {
+  display: block;
   color: var(--libre);
-  font-size: 15px;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@media (max-width: 1000px) {
+  .mapa-zonas-lista {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 620px) {
+  .mapa-zonas-lista {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 /* Sin nada libre la cifra no puede seguir en verde */
 .mapa-zonas-lista li[data-libre="no"] .zona-cifra strong {
