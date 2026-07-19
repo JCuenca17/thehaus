@@ -98,7 +98,7 @@ export function estadosDe(fecha, franja) {
   return estados;
 }
 
-export function crearReserva({ unidadId, nombre, zona, fecha, franja, importe }) {
+export function crearReserva({ unidadId, nombre, zona, fecha, franja, importe, titular, contacto }) {
   const reservas = leerTodas();
 
   const yaEsta = reservas.some(
@@ -117,6 +117,8 @@ export function crearReserva({ unidadId, nombre, zona, fecha, franja, importe })
     fecha,
     franja,
     importe,
+    titular,
+    contacto,
     creada: new Date().toISOString(),
   };
 

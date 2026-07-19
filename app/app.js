@@ -10,6 +10,13 @@ import { crearHoja } from "../js/hoja.js";
 import { crearPanZoom } from "../js/panzoom.js";
 import { FRANJAS, franjaPorId, precioDe, formatear, SON_PROVISIONALES } from "../js/tarifas.js";
 import {
+  obtenerIdentidad,
+  guardarIdentidad,
+  olvidarIdentidad,
+  nombreValido,
+  contactoValido,
+} from "../js/identidad.js";
+import {
   estadosDe,
   crearReserva,
   cancelarReserva,
@@ -190,6 +197,14 @@ function fichaDeUnidad(unidad) {
     <svg class="ico ico-xs" aria-hidden="true"><use href="#i-arrow-right" /></svg>`;
 
   btn.addEventListener("click", () => {
+    // Sin identidad no se reserva: primero se piden los datos y despues
+    // se vuelve a esta misma ficha, para no perder la seleccion
+    if (!obtenerIdentidad()) {
+      hoja.abrir(formularioIdentidad(() => hoja.abrir(fichaDeUnidad(unidad))));
+      return;
+    }
+
+    const identidad = obtenerIdentidad();
     const res = crearReserva({
       unidadId: unidad.id,
       nombre: unidad.nombre,
@@ -197,6 +212,8 @@ function fichaDeUnidad(unidad) {
       fecha: estado.fecha,
       franja: estado.franja,
       importe,
+      titular: identidad.nombre,
+      contacto: identidad.contacto,
     });
 
     hoja.cerrar();
@@ -224,6 +241,71 @@ function fichaDeUnidad(unidad) {
   return frag;
 }
 
+/**
+ * Pide nombre y contacto antes de dejar reservar. No es autenticacion:
+ * solo evita que las reservas queden a nombre de nadie.
+ */
+function formularioIdentidad(alTerminar) {
+  const frag = document.createDocumentFragment();
+
+  const titulo = document.createElement("h2");
+  titulo.className = "hoja-titulo";
+  titulo.textContent = "¿Quién reserva?";
+  frag.appendChild(titulo);
+
+  const meta = document.createElement("p");
+  meta.className = "hoja-meta";
+  meta.textContent = "Necesitamos tus datos para poder confirmarte la reserva.";
+  frag.appendChild(meta);
+
+  const form = document.createElement("form");
+  form.className = "form-identidad";
+  form.noValidate = true;
+  form.innerHTML = `
+    <label>
+      <span>Nombre y apellido</span>
+      <input name="nombre" type="text" autocomplete="name" required />
+    </label>
+    <label>
+      <span>Correo o teléfono</span>
+      <input name="contacto" type="text" autocomplete="email" required />
+    </label>
+    <p class="form-error" hidden></p>
+    <button type="submit" class="btn btn-dark hoja-accion">Continuar</button>
+  `;
+
+  const error = form.querySelector(".form-error");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nombre = form.nombre.value;
+    const contacto = form.contacto.value;
+
+    if (!nombreValido(nombre)) {
+      error.textContent = "Escribe tu nombre completo.";
+      error.hidden = false;
+      form.nombre.focus();
+      return;
+    }
+    if (!contactoValido(contacto)) {
+      error.textContent = "Escribe un correo o un teléfono válido.";
+      error.hidden = false;
+      form.contacto.focus();
+      return;
+    }
+
+    if (!guardarIdentidad({ nombre, contacto })) {
+      error.textContent = "No se pudieron guardar tus datos en este navegador.";
+      error.hidden = false;
+      return;
+    }
+    alTerminar();
+  });
+
+  frag.appendChild(form);
+  return frag;
+}
+
 function listaDeReservas() {
   const frag = document.createDocumentFragment();
 
@@ -231,6 +313,20 @@ function listaDeReservas() {
   titulo.className = "hoja-titulo";
   titulo.textContent = "Mis reservas";
   frag.appendChild(titulo);
+
+  const identidad = obtenerIdentidad();
+  if (identidad) {
+    const quien = document.createElement("p");
+    quien.className = "hoja-meta identidad-actual";
+    quien.innerHTML =
+      `A nombre de <strong>${identidad.nombre}</strong> · ${identidad.contacto} ` +
+      `<button type="button" class="enlace-sutil">Cambiar</button>`;
+    quien.querySelector("button").addEventListener("click", () => {
+      olvidarIdentidad();
+      hoja.abrir(formularioIdentidad(() => hoja.abrir(listaDeReservas())));
+    });
+    frag.appendChild(quien);
+  }
 
   const reservas = listarReservas();
   if (!reservas.length) {
