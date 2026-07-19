@@ -145,3 +145,53 @@ document.querySelectorAll('a[href^="#"]').forEach((a) => {
     }
   });
 });
+
+/* ─── TEASER DEL MAPA ─── */
+/* El modulo del mapa no entra en la carga inicial: se importa cuando el
+   usuario se acerca a la seccion, y el simulador solo late mientras esta
+   a la vista. */
+const mapaTeaser = document.getElementById("mapaTeaser");
+
+if (mapaTeaser) {
+  const quietud = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let simulador = null;
+
+  const observadorVisible = new IntersectionObserver(
+    (entries) => {
+      if (!simulador) return;
+      for (const e of entries) {
+        e.isIntersecting ? simulador.iniciar() : simulador.detener();
+      }
+    },
+    { threshold: 0.08 },
+  );
+
+  const montar = async () => {
+    const { renderizarMapa, crearSimulador } = await import("./js/mapa.js");
+
+    const mapa = renderizarMapa(mapaTeaser, { interactivo: false });
+    simulador = crearSimulador(mapa, { intervalo: 2600, ritmo: 2 });
+
+    if (quietud.matches) {
+      // Con movimiento reducido el plano se siembra una vez y se queda quieto
+      simulador.iniciar();
+      simulador.detener();
+    } else {
+      observadorVisible.observe(mapaTeaser);
+    }
+  };
+
+  const observadorCarga = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      observadorCarga.disconnect();
+      montar().catch(() => {
+        mapaTeaser.innerHTML =
+          '<p class="mapa-espera">No se pudo cargar el plano.</p>';
+      });
+    },
+    { rootMargin: "300px 0px" },
+  );
+
+  observadorCarga.observe(mapaTeaser);
+}
