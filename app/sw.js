@@ -5,15 +5,17 @@
  *  - Navegaciones: red primero, cache como red de seguridad. Si sirviera
  *    la cache primero, un despliegue nuevo tardaria una visita entera en
  *    verse.
- *  - Recursos estaticos: se sirve la copia guardada y en paralelo se pide
- *    la de red para la proxima vez (stale-while-revalidate). Con cache
- *    primero a secas habria que acordarse de subir VERSION en cada
- *    despliegue o el usuario se quedaria con codigo viejo para siempre.
+ *  - Codigo (HTML, JS, CSS): red primero, cache solo si no hay red. El
+ *    codigo cambia en cada despliegue y servir una version vieja provoca
+ *    fallos incomprensibles; la cache aqui solo cubre el caso sin
+ *    conexion.
+ *  - Recursos inmutables (tipografias, iconos): cache primero, que para
+ *    eso no cambian nunca.
  *
  * Nada de esto cachea reservas: viven en localStorage, no en la red.
  */
 
-const VERSION = "v2";
+const VERSION = "v6";
 const CACHE = `thehaus-app-${VERSION}`;
 
 const RECURSOS = [
@@ -28,6 +30,7 @@ const RECURSOS = [
   "/js/mobiliario.js",
   "/js/tarifas.js",
   "/js/reservas.js",
+  "/js/identidad.js",
   "/js/hoja.js",
   "/js/panzoom.js",
   "/fonts/bdsans-bold.woff2",
@@ -59,12 +62,32 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+/** Lo que no cambia entre despliegues puede servirse desde cache sin riesgo */
+const esInmutable = (ruta) => /^\/(fonts|icons|img)\//.test(ruta);
+
 self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  if (esInmutable(url.pathname)) {
+    e.respondWith(
+      caches.match(request).then(
+        (guardado) =>
+          guardado ??
+          fetch(request).then((res) => {
+            if (res.ok) {
+              const copia = res.clone();
+              caches.open(CACHE).then((c) => c.put(request, copia));
+            }
+            return res;
+          }),
+      ),
+    );
+    return;
+  }
 
   if (request.mode === "navigate") {
     e.respondWith(
@@ -79,20 +102,16 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
+  // Codigo: siempre la version de red mientras la haya
   e.respondWith(
-    caches.match(request).then((guardado) => {
-      const desdeRed = fetch(request)
-        .then((res) => {
-          if (res.ok) {
-            const copia = res.clone();
-            caches.open(CACHE).then((c) => c.put(request, copia));
-          }
-          return res;
-        })
-        .catch(() => guardado);
-
-      // Se responde ya con lo guardado; la red actualiza para la proxima
-      return guardado ?? desdeRed;
-    }),
+    fetch(request)
+      .then((res) => {
+        if (res.ok) {
+          const copia = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, copia));
+        }
+        return res;
+      })
+      .catch(() => caches.match(request)),
   );
 });

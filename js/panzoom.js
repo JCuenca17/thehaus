@@ -11,6 +11,11 @@
 
 const UMBRAL_TOQUE = 6; // px de movimiento por debajo de los cuales es un tap
 
+/* Elementos que gestionan su propio click. Sin esta excepcion, el
+   setPointerCapture del contenedor se queda el puntero y el boton nunca
+   llega a recibir su evento: los controles dejan de responder al raton. */
+const esControl = (el) => !!el?.closest?.("button, a, input, select, label");
+
 export function crearPanZoom(contenedor, capa, opciones = {}) {
   const { min = 0.6, max = 4, inicial = 1 } = opciones;
 
@@ -61,13 +66,26 @@ export function crearPanZoom(contenedor, capa, opciones = {}) {
   contenedor.addEventListener(
     "wheel",
     (e) => {
+      if (esControl(e.target)) return;
       e.preventDefault();
-      zoomEn(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX, e.clientY);
+
+      // Un trackpad dispara decenas de eventos diminutos donde un raton
+      // manda uno grande. Con un factor fijo por evento el zoom se
+      // dispara; escalarlo por el desplazamiento real lo iguala.
+      const porUnidad = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
+      const desplazamiento = e.deltaY * porUnidad;
+
+      // El pellizco de trackpad llega como rueda con ctrl pulsado
+      const sensibilidad = e.ctrlKey ? 0.006 : 0.0013;
+      const factor = Math.exp(-desplazamiento * sensibilidad);
+
+      zoomEn(Math.min(1.5, Math.max(0.67, factor)), e.clientX, e.clientY);
     },
     { passive: false },
   );
 
   contenedor.addEventListener("pointerdown", (e) => {
+    if (esControl(e.target)) return;
     punteros.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (punteros.size === 1) {
       arrastrando = true;

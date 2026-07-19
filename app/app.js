@@ -28,6 +28,19 @@ import {
 
 const $ = (id) => document.getElementById(id);
 
+/* Engancha un control tolerando que no exista. Un unico id desincronizado
+   entre el HTML y este archivo tumbaba el modulo entero y con el toda la
+   aplicacion; asi solo se pierde ese control. */
+const alPulsar = (id, fn) => {
+  const el = $(id);
+  if (!el) {
+    console.warn(`[app] falta el control #${id}`);
+    return null;
+  }
+  el.addEventListener("click", fn);
+  return el;
+};
+
 const estado = {
   fecha: hoy(),
   franja: "manana",
@@ -383,17 +396,34 @@ mapa = renderizarMapa($("capaMapa"), {
 
 panzoom = crearPanZoom($("lienzo"), $("capaMapa"));
 
-$("btnGirar").addEventListener("click", () => {
+alPulsar("btnGirar", () => {
   mapa.girar(1);
   // girar() reconstruye el SVG desde cero, asi que hay que repintar estado
   refrescar();
   panzoom.reiniciar();
 });
 
-$("btnAcercar").addEventListener("click", () => panzoom.acercar());
-$("btnAlejar").addEventListener("click", () => panzoom.alejar());
-$("btnEncajar").addEventListener("click", () => panzoom.reiniciar());
-$("btnReservas").addEventListener("click", () => hoja.abrir(listaDeReservas()));
+alPulsar("btnAcercar", () => panzoom.acercar());
+alPulsar("btnAlejar", () => panzoom.alejar());
+/* El icono de expandir promete pantalla completa, asi que hace eso.
+   Reencuadrar pasa a estar en el doble clic sobre el plano, que es donde
+   se busca por instinto. */
+const btnPantalla = alPulsar("btnPantalla", async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch {
+    avisar("Tu navegador no permite pantalla completa aquí");
+  }
+});
+
+document.addEventListener("fullscreenchange", () => {
+  btnPantalla?.setAttribute("aria-pressed", String(!!document.fullscreenElement));
+  panzoom.reiniciar();
+});
+
+$("lienzo")?.addEventListener("dblclick", () => panzoom.reiniciar());
+alPulsar("btnReservas", () => hoja.abrir(listaDeReservas()));
 
 pintarFiltros();
 refrescar();

@@ -475,3 +475,9 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* En pantalla completa el lienzo se queda con todo el alto disponible */
+:fullscreen .app-body,
+.app-body:fullscreen {
+  height: 100vh;
+}
