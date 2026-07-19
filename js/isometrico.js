@@ -4,10 +4,11 @@
  * No define geometria propia: toma los mismos rectangulos de planta.js y
  * los proyecta. Cambiar de vista plana a isometrica no toca el modelo.
  *
- * El plano gira en pasos de 90 grados. Se rota en coordenadas de planta,
- * antes de proyectar, no con un transform del SVG: girando el SVG entero
- * girarian tambien las etiquetas y las caras dejarian de corresponder con
- * la orientacion de la luz.
+ * El plano descansa en pasos de 90 grados pero la animacion recorre los
+ * angulos intermedios. Se rota en coordenadas de planta, antes de
+ * proyectar, no con un transform del SVG: girando el SVG entero girarian
+ * tambien las etiquetas y las caras dejarian de corresponder con la
+ * orientacion de la luz.
  *
  * Convencion: +x va a la derecha y abajo, +y a la izquierda y abajo, y la
  * elevacion z sube en pantalla. Las dos caras laterales visibles son
@@ -32,18 +33,20 @@ export function crearProyeccion({ local, angulo = 30, giro = 0 } = {}) {
 
   const cx = local.ancho / 2;
   const cy = local.alto / 2;
-  const pasos = ((giro % GIROS) + GIROS) % GIROS;
+
+  // `giro` se mide en cuartos de vuelta y admite decimales: en reposo vale
+  // un entero, pero durante la animacion pasa por todos los valores
+  // intermedios. De ahi que se rote con seno y coseno en vez de
+  // intercambiando ejes.
+  const anguloGiro = giro * (Math.PI / 2);
+  const cosG = Math.cos(anguloGiro);
+  const senG = Math.sin(anguloGiro);
 
   /** Rota un punto de planta alrededor del centro del local */
   const rotar = (x, y) => {
-    let dx = x - cx;
-    let dy = y - cy;
-    for (let i = 0; i < pasos; i++) {
-      const t = dx;
-      dx = -dy;
-      dy = t;
-    }
-    return [cx + dx, cy + dy];
+    const dx = x - cx;
+    const dy = y - cy;
+    return [cx + dx * cosG - dy * senG, cy + dx * senG + dy * cosG];
   };
 
   /** Punto del plano (cm) → punto de pantalla */
@@ -55,9 +58,9 @@ export function crearProyeccion({ local, angulo = 30, giro = 0 } = {}) {
   const cadena = (puntos) => puntos.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
 
   /**
-   * Las cuatro esquinas de un rectangulo. Con giros de 90 grados un
-   * rectangulo sigue siendo un rectangulo, asi que basta con rotar las
-   * esquinas y conservar el orden.
+   * Las cuatro esquinas de un rectangulo. Se rotan una a una y se conserva
+   * el orden, asi que la figura sigue cerrando bien en cualquier angulo,
+   * tambien en los intermedios del giro.
    */
   const esquinas = ({ x, y, w, h }, z) => [
     punto(x, y, z),

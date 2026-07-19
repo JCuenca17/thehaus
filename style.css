@@ -1509,6 +1509,26 @@ a {
   font-family: var(--body);
 }
 
+/* Suelo del local: da borde al plano para que las zonas no floten */
+.local-suelo {
+  fill: rgba(12, 12, 12, 0.035);
+  stroke: rgba(12, 12, 12, 0.12);
+  stroke-width: 3;
+}
+
+/* El pasillo se aclara respecto al resto: es el vacio por el que se anda,
+   y verlo es lo que convierte un conjunto de cajas en un recorrido */
+.circulacion {
+  fill: var(--blanco);
+  stroke: rgba(12, 12, 12, 0.08);
+  stroke-width: 2;
+}
+
+/* La puerta marca por donde se entra, que es el origen de todo el reparto */
+.acceso {
+  fill: var(--dorado);
+}
+
 /* Zonas: solo contexto, sin peso visual que compita con los asientos */
 .zona-fondo {
   fill: rgba(12, 12, 12, 0.028);
@@ -1811,6 +1831,23 @@ a {
    del suelo. Cada material se sombrea segun la cara que toca. */
 .mapa--isometrico .pieza {
   stroke: none;
+}
+
+/* El mobiliario se retira durante el giro y vuelve al pararse. Entra con
+   un fundido para que se lea como que el plano se detiene y se detalla,
+   no como un parpadeo. */
+@keyframes aparece-mobiliario {
+  from {
+    opacity: 0;
+  }
+}
+.mapa--isometrico .mobiliario {
+  animation: aparece-mobiliario 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mapa--isometrico .mobiliario {
+    animation: none;
+  }
 }
 .mapa--isometrico .mat--madera.cara-sup {
   fill: #c9a678;

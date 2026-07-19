@@ -15,7 +15,7 @@
  * Nada de esto cachea reservas: viven en localStorage, no en la red.
  */
 
-const VERSION = "v6";
+const VERSION = "v7";
 const CACHE = `thehaus-app-${VERSION}`;
 
 const RECURSOS = [

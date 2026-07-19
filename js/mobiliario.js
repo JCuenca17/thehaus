@@ -67,29 +67,37 @@ function escritorio({ x, y, w, h }) {
   ];
 }
 
-/* ─── Butaca de lounge (180 x 130) ─── */
-function butaca({ x, y, w, h }) {
+/* ─── Butaca de lounge (125 x 160) ─── */
+function butaca({ x, y, w, h }, unidad = {}) {
+  // El asiento se pega al lado contrario al que mira, para que el respaldo
+  // quede detras y la mesita caiga siempre al alcance de la mano
+  const alSur = (unidad.mira ?? "sur") === "sur";
+  const fondo = h - 58;
+  const asientoY = alSur ? y + 8 : y + h - 8 - fondo;
+
   return [
-    caja(x + 4, y + 4, w - 60, h - 8, A.sofa, "tapizado"),
-    caja(x + 4, y + 4, w - 60, 12, A.sofa + 26, "tapizado"),
-    caja(x + w - 48, y + h / 2 - 22, 42, 44, A.mesita, "madera"),
+    caja(x + 8, asientoY, w - 16, fondo, A.sofa, "tapizado"),
+    caja(x + 8, alSur ? asientoY : asientoY + fondo - 14, w - 16, 14, A.sofa + 26, "tapizado"),
+    caja(x + w / 2 - 26, alSur ? y + h - 44 : y + 10, 52, 34, A.mesita, "madera"),
   ];
 }
 
-/* ─── Oficina privada: tabiques bajos, mesa y cuatro sillas ─── */
+/* ─── Oficina privada (207 x 220): despacho para dos ─── */
 function oficina({ x, y, w, h }) {
   const piezas = [
     // Tabiques bajos: dejan ver el interior, que es lo que interesa
     caja(x, y, w, 10, A.tabique, "tabique"),
     caja(x, y, 10, h, A.tabique, "tabique"),
     caja(x + w - 10, y, 10, h, A.tabique, "tabique"),
-    caja(x + w / 2 - 62, y + h / 2 - 45, 124, 90, A.mesa, "madera"),
+    // Mesa corrida contra el fondo, con dos monitores
+    caja(x + 18, y + 34, w - 36, 54, A.mesa, "madera"),
+    caja(x + w / 2 - 46, y + 40, 26, 4, A.mesa + 28, "pantalla"),
+    caja(x + w / 2 + 20, y + 40, 26, 4, A.mesa + 28, "pantalla"),
   ];
 
-  // Las de arriba miran al sur y las de abajo al norte: todas hacia la mesa
-  for (const dx of [-42, 10]) {
-    piezas.push(...silla(x + w / 2 + dx, y + h / 2 - 82, 34, 32, "sur"));
-    piezas.push(...silla(x + w / 2 + dx, y + h / 2 + 50, 34, 32, "norte"));
+  // Las dos sillas quedan al sur de la mesa, asi que se sientan mirando al norte
+  for (const dx of [-56, 12]) {
+    piezas.push(...silla(x + w / 2 + dx, y + 104, 44, 34, "norte"));
   }
   return piezas;
 }
@@ -145,7 +153,9 @@ export function amueblar(unidad) {
   const generador = POR_ZONA[unidad.zona];
   return {
     plataforma: { rect: unidad.rect, alto: A.plataforma },
-    piezas: generador ? generador(unidad.rect) : [],
+    // Se pasa la unidad entera y no solo su rectangulo: hay muebles que
+    // necesitan saber hacia donde se orientan
+    piezas: generador ? generador(unidad.rect, unidad) : [],
   };
 }
 
@@ -175,9 +185,18 @@ function cafeteria({ x, y, w, h }) {
     caja(x + w - 80, y + 18, 62, 46, A.vending, "pantalla"),
   ];
 
-  // Taburetes en fila delante de la barra
+  // Taburetes pegados a la barra, no en el extremo opuesto de la sala
   for (let i = 0; i < 4; i++) {
-    piezas.push(caja(x + 40 + i * 72, y + h - 52, 36, 36, A.taburete, "tapizado"));
+    piezas.push(caja(x + 40 + i * 72, y + 78, 36, 36, A.taburete, "tapizado"));
+  }
+
+  // Dos mesas para quedarse: sin ellas esto es un office, no una cafeteria
+  for (const my of [y + 200, y + 400]) {
+    piezas.push(caja(x + 70, my, 150, 90, A.mesa, "madera"));
+    for (const dx of [20, 88]) {
+      piezas.push(...silla(x + 70 + dx, my - 46, 44, 38, "sur"));
+      piezas.push(...silla(x + 70 + dx, my + 98, 44, 38, "norte"));
+    }
   }
   return piezas;
 }
