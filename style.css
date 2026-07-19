@@ -1669,41 +1669,41 @@ a {
 /* ─── Vista isométrica ─── */
 /* Las caras heredan el color de estado y se oscurecen segun orientacion,
    que es lo que produce la sensacion de volumen sin luces reales. */
-.mapa--isometrico .unidad polygon {
+.mapa--isometrico .unidad .plat {
   transition:
     fill 0.45s var(--ease),
     stroke 0.45s var(--ease);
 }
-.mapa--isometrico .unidad .cara-sup {
-  fill: #cfe9dd;
+.mapa--isometrico .unidad .plat.cara-sup {
+  fill: #a6dcc4;
   stroke: var(--libre);
   stroke-width: 3;
   stroke-linejoin: round;
 }
-.mapa--isometrico .unidad .cara-der {
+.mapa--isometrico .unidad .plat.cara-der {
   fill: var(--libre);
   opacity: 0.55;
 }
-.mapa--isometrico .unidad .cara-izq {
+.mapa--isometrico .unidad .plat.cara-izq {
   fill: var(--libre);
   opacity: 0.32;
 }
 
-.mapa--isometrico .unidad[data-estado="reservado"] .cara-sup {
-  fill: #fbdcc9;
+.mapa--isometrico .unidad[data-estado="reservado"] .plat.cara-sup {
+  fill: #f9c2a0;
   stroke: var(--reservado);
 }
-.mapa--isometrico .unidad[data-estado="reservado"] .cara-der,
-.mapa--isometrico .unidad[data-estado="reservado"] .cara-izq {
+.mapa--isometrico .unidad[data-estado="reservado"] .plat.cara-der,
+.mapa--isometrico .unidad[data-estado="reservado"] .plat.cara-izq {
   fill: var(--reservado);
 }
 
-.mapa--isometrico .unidad[data-estado="ocupado"] .cara-sup {
-  fill: #d8dbde;
+.mapa--isometrico .unidad[data-estado="ocupado"] .plat.cara-sup {
+  fill: #c6cace;
   stroke: var(--ocupado);
 }
-.mapa--isometrico .unidad[data-estado="ocupado"] .cara-der,
-.mapa--isometrico .unidad[data-estado="ocupado"] .cara-izq {
+.mapa--isometrico .unidad[data-estado="ocupado"] .plat.cara-der,
+.mapa--isometrico .unidad[data-estado="ocupado"] .plat.cara-izq {
   fill: var(--ocupado);
 }
 
@@ -1739,13 +1739,13 @@ a {
 .mapa--isometrico.mapa--interactivo .unidad:focus-visible {
   transform: translateY(-14px);
 }
-.mapa--isometrico.mapa--interactivo .unidad:focus-visible .cara-sup {
+.mapa--isometrico.mapa--interactivo .unidad:focus-visible .plat.cara-sup {
   stroke: var(--azul);
   stroke-width: 7;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mapa--isometrico .unidad polygon,
+  .mapa--isometrico .unidad .plat,
   .mapa--isometrico.mapa--interactivo .unidad {
     transition: none;
   }
@@ -1786,4 +1786,78 @@ a {
 /* Sin nada libre la cifra no puede seguir en verde */
 .mapa-zonas-lista li[data-libre="no"] .zona-cifra strong {
   color: var(--ocupado);
+}
+
+/* ─── Materiales del mobiliario ─── */
+/* Los muebles no cambian nunca de color: el estado lo dice la plataforma
+   del suelo. Cada material se sombrea segun la cara que toca. */
+.mapa--isometrico .pieza {
+  stroke: none;
+}
+.mapa--isometrico .mat--madera.cara-sup {
+  fill: #c9a678;
+}
+.mapa--isometrico .mat--madera.cara-der {
+  fill: #ab8a5f;
+}
+.mapa--isometrico .mat--madera.cara-izq {
+  fill: #8f7250;
+}
+
+.mapa--isometrico .mat--tapizado.cara-sup {
+  fill: #55606b;
+}
+.mapa--isometrico .mat--tapizado.cara-der {
+  fill: #454f59;
+}
+.mapa--isometrico .mat--tapizado.cara-izq {
+  fill: #363f47;
+}
+
+.mapa--isometrico .mat--pantalla.cara-sup {
+  fill: #2b3138;
+}
+.mapa--isometrico .mat--pantalla.cara-der {
+  fill: #1f242a;
+}
+.mapa--isometrico .mat--pantalla.cara-izq {
+  fill: #171b20;
+}
+
+.mapa--isometrico .mat--tabique.cara-sup {
+  fill: #e6e4e0;
+}
+.mapa--isometrico .mat--tabique.cara-der {
+  fill: #d2cfca;
+}
+.mapa--isometrico .mat--tabique.cara-izq {
+  fill: #bcb8b2;
+}
+
+/* La plataforma pierde el trazo grueso: ahora el protagonista es el mueble */
+.mapa--isometrico .unidad .plat.cara-sup {
+  stroke-width: 4;
+}
+
+/* ─── Entrada escalonada ─── */
+/* El plano se construye de fondo a frente al aparecer */
+@keyframes unidadEntra {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.mapa--isometrico .unidad {
+  animation: unidadEntra 0.5s var(--ease) backwards;
+  animation-delay: calc(var(--orden, 0) * 14ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapa--isometrico .unidad {
+    animation: none;
+  }
 }

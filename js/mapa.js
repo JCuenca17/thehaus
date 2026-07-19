@@ -9,6 +9,7 @@
  */
 import { LOCAL, ZONAS, SERVICIOS, PUESTOS, ESPACIOS, ESTADOS } from "./planta.js";
 import { crearProyeccion, porProfundidad, ALTURAS } from "./isometrico.js";
+import { amueblar } from "./mobiliario.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -93,28 +94,48 @@ export function renderizarMapa(contenedor, opciones = {}) {
   const capaUnidades = crear("g", { class: "mapa-unidades" });
   const nodos = new Map();
 
-  const pintar = (unidad, tipo) => {
+  const pintar = (unidad, tipo, indice) => {
     const g = crear("g", {
       class: `unidad unidad--${tipo}`,
       "data-id": unidad.id,
       "data-estado": "libre",
     });
 
+    // Las unidades entran escalonadas siguiendo el orden de profundidad,
+    // asi el plano se "construye" de fondo a frente. El CSS decide si la
+    // animacion llega a ocurrir (prefers-reduced-motion la anula).
+    g.style.setProperty("--orden", indice);
+
     if (iso) {
-      // Las laterales primero: la cara superior las tapa por el borde
-      const p = iso.prisma(unidad.rect, ALTURAS[tipo]);
-      g.appendChild(crear("polygon", { points: p.izquierda, class: "cara-izq" }));
-      g.appendChild(crear("polygon", { points: p.derecha, class: "cara-der" }));
-      g.appendChild(crear("polygon", { points: p.superior, class: "cara-sup" }));
+      const { plataforma, piezas } = amueblar(unidad);
+
+      // Plataforma: la unica pieza que lleva el color de estado. Va con
+      // clase propia para que las reglas de estado no alcancen a los muebles.
+      const base = iso.prisma(plataforma.rect, plataforma.alto);
+      g.appendChild(crear("polygon", { points: base.izquierda, class: "plat cara-izq" }));
+      g.appendChild(crear("polygon", { points: base.derecha, class: "plat cara-der" }));
+      g.appendChild(crear("polygon", { points: base.superior, class: "plat cara-sup" }));
+
+      // Muebles encima, en orden de profundidad para que se tapen bien
+      const mobiliario = crear("g", { class: "mobiliario" });
+      for (const pieza of [...piezas].sort(porProfundidad)) {
+        const c = iso.prisma(pieza.rect, plataforma.alto + pieza.alto);
+        const m = `mat--${pieza.material}`;
+        mobiliario.appendChild(crear("polygon", { points: c.izquierda, class: `pieza cara-izq ${m}` }));
+        mobiliario.appendChild(crear("polygon", { points: c.derecha, class: `pieza cara-der ${m}` }));
+        mobiliario.appendChild(crear("polygon", { points: c.superior, class: `pieza cara-sup ${m}` }));
+      }
+      g.appendChild(mobiliario);
     } else {
       g.appendChild(crear("rect", { ...medidas(unidad.rect), rx: tipo === "espacio" ? 12 : 6 }));
     }
 
-    if (tipo === "espacio") {
-      const [cx, cy] = iso
-        ? iso.centro(unidad.rect, ALTURAS.espacio)
-        : [unidad.rect.x + unidad.rect.w / 2, unidad.rect.y + unidad.rect.h / 2];
-      g.appendChild(texto({ x: cx, y: cy + 10, class: "unidad-etiqueta" }, unidad.nombre));
+    if (tipo === "espacio" && !iso) {
+      g.appendChild(texto({
+        x: unidad.rect.x + unidad.rect.w / 2,
+        y: unidad.rect.y + unidad.rect.h / 2,
+        class: "unidad-etiqueta",
+      }, unidad.nombre));
     }
 
     if (interactivo) {
@@ -135,7 +156,7 @@ export function renderizarMapa(contenedor, opciones = {}) {
     ...ESPACIOS.map((u) => ({ ...u, _tipo: "espacio" })),
   ];
   if (iso) unidades.sort(porProfundidad);
-  unidades.forEach((u) => pintar(u, u._tipo));
+  unidades.forEach((u, i) => pintar(u, u._tipo, i));
 
   svg.appendChild(capaUnidades);
   contenedor.replaceChildren(svg);
