@@ -39,3 +39,5 @@ scripts/                           optimización de imágenes, fuentes e íconos
 ```
 
 Para verlo en local hace falta un servidor estático, por ejemplo `npx serve .`, porque los módulos ES no cargan desde `file://`.
+
+© 2026 José Luis Cuenca Gutiérrez. Todos los derechos reservados.
