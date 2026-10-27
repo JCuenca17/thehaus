@@ -12,3 +12,6 @@ img/hero-placeholder.txt
 
 # Banco de pruebas de la planta: herramienta de desarrollo, no va a produccion
 mapa-preview.html
+
+# Capturas del README: no hacen falta en el sitio
+docs/capturas
